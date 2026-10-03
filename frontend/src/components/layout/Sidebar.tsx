@@ -7,12 +7,12 @@ import {
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Mission Control', path: '/' },
   { icon: Plane, label: 'Drone Simulator', path: '/simulator' },
-  { icon: Network, label: 'ROS2 Lab', path: '/ros2' },
-  { icon: Eye, label: 'Computer Vision', path: '/cv' },
-  { icon: Activity, label: 'Sensor Data', path: '/sensors' },
-  { icon: BarChart2, label: 'Data Analysis', path: '/data' },
-  { icon: Cpu, label: 'Edge AI', path: '/edge' },
-  { icon: FlaskConical, label: 'Experiments', path: '/experiments' },
+  { icon: Network, label: 'ROS2 & Gazebo', path: '/ros2' },
+  { icon: Eye, label: 'Drone Vision', path: '/cv' },
+  { icon: Activity, label: 'Flight Sensors', path: '/sensors' },
+  { icon: BarChart2, label: 'Flight Data', path: '/data' },
+  { icon: Cpu, label: 'UAV Edge AI', path: '/edge' },
+  { icon: FlaskConical, label: 'Simulation Experiments', path: '/experiments' },
   { icon: Terminal, label: 'System Logs', path: '/logs' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
