@@ -1,6 +1,6 @@
-# RoboEdge AI Lab
+# RoboEdge AI Lab — UAS / Drone Simulation Platform
 
-> **Drone Simulation, ROS2, Computer Vision & Edge AI Experimentation Platform**
+> **UAS / Drone Simulation, ROS2, Gazebo, Computer Vision & Edge AI Experimentation Platform**
 
 A professional-grade UAS / Drone R&D control and experimentation platform, designed to demonstrate real-world aerospace robotics engineering skills. Built for a UAS / Drone Simulation internship portfolio.
 
@@ -52,11 +52,10 @@ The system currently operates in **Demo Simulation Mode** — a fully functional
 | **ROS2 Lab** | ✅ | Node graph visualization, topic monitor, service explorer |
 | **Computer Vision** | ✅ | OpenCV image processing: edge detection, blur, contours |
 | **Sensor Data** | ✅ | Live IMU, GPS, altitude, velocity, battery charts |
-| **Data Analysis** | ✅ | CSV upload + pandas/numpy statistics + charts |
-| **Edge AI** | ✅ | Jetson/RPi device comparison, inference benchmarks |
-| **Experiments** | ✅ | Experiment management and tracking |
+| **UAV Edge AI** | ✅ | Edge inference concepts and drone deployment targets |
+| **Simulation Experiments** | ✅ | Drone simulation trials, telemetry and CV results |
 | **System Logs** | ✅ | Real-time log viewer with filtering |
-| **Settings** | ✅ | Simulation mode, API, ROS2, Gazebo configuration |
+| **Settings** | ✅ | Simulation, ROS2 and Gazebo configuration |
 | **WebSocket Streaming** | ✅ | Real-time telemetry at 10Hz via `/ws/telemetry` |
 | **Demo Mode** | ✅ | Fully functional without ROS2/Gazebo |
 | **ROS2 Integration** | 🔜 | Adapter stub provided — requires ROS2 environment |
