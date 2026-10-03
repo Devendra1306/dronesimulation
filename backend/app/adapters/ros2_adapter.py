@@ -39,6 +39,10 @@ class ROS2Adapter(SimulationAdapter):
         self._reconnect_task: Optional[asyncio.Task] = None
         self._should_run = True
 
+        # Active Topics & Diagnostics
+        self.active_topics: Set[str] = set()
+        self.last_topic_recv: Dict[str, float] = {}
+
         # Internal state updated from ROS2 topics
         self.mode = "STANDBY"
         self.is_armed = False
@@ -49,13 +53,18 @@ class ROS2Adapter(SimulationAdapter):
         self.pitch = 0.0
         self.roll = 0.0
         self.yaw = 0.0
-        self.lat = 16.5062
-        self.lon = 80.6480
-        self.battery = 100.0
-        self.signal_strength = 98.0
+        self.lat = 0.0
+        self.lon = 0.0
+        self.battery = 0.0
+        self.battery_available = False
+        self.signal_strength = 0.0
         self.sim_time = 0.0
         self.start_time = time.time()
         self.last_msg_time = 0.0
+
+    @property
+    def is_bridge_connected(self) -> bool:
+        return self._connected
 
     async def connect(self) -> bool:
         """Initiate background connection to rosbridge."""
@@ -228,8 +237,8 @@ class ROS2Adapter(SimulationAdapter):
         now = time.time()
         self.sim_time = now - self.start_time
 
-        # If rosbridge is connected and receiving, return real topic data
-        source = "ROS2_GAZEBO" if self._connected else "ROS2_STANDBY"
+        source = "ROS2" if self._connected else "ROS2_DISCONNECTED"
+        bat = round(self.battery, 1) if (self._connected and self.battery_available) else (100.0 if self._connected else 0.0)
 
         return TelemetryData(
             timestamp=now,
@@ -241,7 +250,7 @@ class ROS2Adapter(SimulationAdapter):
             yaw=round(self.yaw, 2),
             latitude=round(self.lat, 6),
             longitude=round(self.lon, 6),
-            battery=round(self.battery, 1),
+            battery=bat,
             signal_strength=round(self.signal_strength if self._connected else 0.0, 1),
             simulation_time=round(self.sim_time, 2),
             mode=self.mode,

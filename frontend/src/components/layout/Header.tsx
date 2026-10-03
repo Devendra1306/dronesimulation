@@ -7,11 +7,12 @@ import type { SystemStatus, DatabaseStatus } from '../../types';
 interface StatusPipProps {
   connected: boolean;
   label: string;
+  title?: string;
 }
-function StatusPip({ connected, label }: StatusPipProps) {
+function StatusPip({ connected, label, title }: StatusPipProps) {
   return (
-    <div className="flex items-center gap-1.5">
-      <div className={`status-dot ${connected ? 'bg-status-green ring-2 ring-status-green/20' : 'bg-surface-5'}`} />
+    <div className="flex items-center gap-1.5" title={title || `${label}: ${connected ? 'CONNECTED' : 'DISCONNECTED'}`}>
+      <div className={`status-dot ${connected ? 'bg-status-green ring-2 ring-status-green/20' : 'bg-surface-5 border border-text-muted/30'}`} />
       <span className={`text-[11px] font-mono tracking-wider ${connected ? 'text-text-primary' : 'text-text-muted'}`}>{label}</span>
     </div>
   );
@@ -76,11 +77,23 @@ export default function Header() {
       {/* Center/Right: GCS Subsystem Status (MODE | ROS2 | GAZEBO | TELEMETRY | DATABASE) */}
       <div className="flex items-center gap-5">
         <div className="flex items-center gap-4 bg-surface-1/60 px-3 py-1 rounded-md border border-border-subtle">
-          <StatusPip connected={wsConnected} label="TELEMETRY" />
+          <StatusPip
+            connected={wsConnected}
+            label="TELEMETRY"
+            title={wsConnected ? "FastAPI WebSocket Stream: ACTIVE" : "FastAPI WebSocket Stream: OFFLINE"}
+          />
           <div className="h-3 w-px bg-border-subtle" />
-          <StatusPip connected={ros2Connected} label="ROS2" />
+          <StatusPip
+            connected={ros2Connected}
+            label="ROS2"
+            title={ros2Connected ? "ROS2 Link: CONNECTED (ws://localhost:9090)" : "ROS2 Link: DISCONNECTED (Waiting for rosbridge_server)"}
+          />
           <div className="h-3 w-px bg-border-subtle" />
-          <StatusPip connected={gazeboConnected} label="GAZEBO" />
+          <StatusPip
+            connected={gazeboConnected}
+            label="GAZEBO"
+            title={gazeboConnected ? "Gazebo Physics Stream: ACTIVE" : "Gazebo Physics Stream: DISCONNECTED (Start Gazebo simulation world)"}
+          />
           <div className="h-3 w-px bg-border-subtle" />
           <div className="flex items-center gap-1.5" title={dbStatus?.message || (dbConnected ? "MongoDB Atlas Connected" : "MongoDB Offline")}>
             <div className={`status-dot ${dbConnected ? 'bg-status-green ring-2 ring-status-green/20' : 'bg-surface-5'}`} />

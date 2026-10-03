@@ -43,24 +43,21 @@ The system currently operates in **Demo Simulation Mode** — a fully functional
 
 ---
 
-## Features
+## Features & 9 UAS Sections
 
-| Feature | Status | Description |
+| Section | Status | Description |
 |---------|--------|-------------|
-| **Mission Control Dashboard** | ✅ | Real-time drone telemetry, controls, sensor graphs |
-| **Drone Simulator** | ✅ | ARM/DISARM/TAKEOFF/LAND/HOVER/STOP + directional control |
-| **ROS2 Lab** | ✅ | Node graph visualization, topic monitor, service explorer |
-| **Computer Vision** | ✅ | OpenCV image processing: edge detection, blur, contours |
-| **Sensor Data** | ✅ | Live IMU, GPS, altitude, velocity, battery charts |
-| **Data Analysis** | ✅ | CSV upload + pandas/numpy statistics + charts |
-| **Edge AI** | ✅ | Jetson/RPi device comparison, inference benchmarks |
-| **Experiments** | ✅ | Experiment management and tracking |
-| **System Logs** | ✅ | Real-time log viewer with filtering |
-| **Settings** | ✅ | Simulation mode, API, ROS2, Gazebo configuration |
-| **WebSocket Streaming** | ✅ | Real-time telemetry at 10Hz via `/ws/telemetry` |
-| **Demo Mode** | ✅ | Fully functional without ROS2/Gazebo |
-| **ROS2 Integration** | 🔜 | Adapter stub provided — requires ROS2 environment |
-| **Gazebo Integration** | 🔜 | Adapter stub provided — requires Gazebo |
+| **Mission Control Dashboard** | ✅ | GCS telemetry HUD, flight commands (ARM, TAKEOFF, LAND, STOP), and live Recharts stream |
+| **Drone Simulator (SITL)** | ✅ | Native SITL flight physics, Primary Flight Display (PFD) artificial horizon, camera HUD overlay |
+| **ROS2 & Gazebo Lab** | ✅ | Dynamic node graph, topic monitor (/odom, /cmd_vel, /imu/data, /gps/fix), rate analytics |
+| **Drone Vision** | ✅ | Aerial target extraction, Canny edge detection, contour analysis, OpenCV pipeline |
+| **Flight Sensors** | ✅ | 6 avionics sensors: 6-DOF IMU, GNSS GPS, barometric altimeter, pitot speed, LiPo BMS, RF link |
+| **UAV Edge AI** | ✅ | Embedded companion computer profiles (Jetson Orin/Nano, RPi 4/5), sub-40ms latency analysis |
+| **Simulation Experiments** | ✅ | MongoDB Atlas persistent trials for flight tests, navigation, CV detection, and RTL failsafes |
+| **System Logs** | ✅ | High-frequency engineering log stream with severity filtering and millisecond timestamps |
+| **Settings** | ✅ | Runtime adapter selection (Demo, ROS2, Gazebo), rosbridge endpoint, and persistence rates |
+| **ROS2 Adapter** | ✅ | Full rosbridge JSON client subscribing to /odom, /imu/data, /gps/fix and publishing /cmd_vel |
+| **Gazebo Adapter** | ✅ | Dual-mode Gazebo Classic / Gazebo Sim adapter with unpause/pause services and model odometry |
 
 ---
 
@@ -260,49 +257,47 @@ All telemetry is clearly labelled as **DEMO / SIMULATION** data.
 
 ---
 
-## Running — With ROS2
+## Running — With ROS2 & Gazebo
 
-See the full guide: [docs/GazeboIntegration.md](docs/GazeboIntegration.md)
+See the comprehensive engineering guide: [docs/ROS2_Gazebo_Integration.md](docs/ROS2_Gazebo_Integration.md)
 
-Quick summary:
+### Mode 1: ROS 2 Headless / Standalone Topic Verification
 ```bash
-# 1. Change .env
-SIMULATION_MODE=ros2
-ROS2_BRIDGE_URL=ws://localhost:9090
+# Terminal 1 — Start ROS 2 test node
+source /opt/ros/humble/setup.bash
+python3 simulation/scripts/mock_gazebo_ros2_node.py
 
-# 2. Start rosbridge
-ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+# Terminal 2 — Start rosbridge (loopback only)
+source /opt/ros/humble/setup.bash
+ros2 launch rosbridge_server rosbridge_websocket_launch.xml address:=127.0.0.1 port:=9090
 
-# 3. Start your ROS2 nodes
-ros2 run roboedge_drone drone_controller
+# Terminal 3 — Start FastAPI Gateway
+cd backend
+export SIMULATION_MODE=gazebo
+export ROS2_BRIDGE_URL=ws://127.0.0.1:9090
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-# 4. Restart backend
-uvicorn app.main:app --reload
+# Terminal 4 — Start React GCS Dashboard
+cd frontend
+npm run dev
 ```
 
----
-
-## Running — With Gazebo
-
-See the full guide: [docs/GazeboIntegration.md](docs/GazeboIntegration.md)
-
-Quick summary:
+### Mode 2: Full 3D Gazebo Simulation
 ```bash
-# 1. Change .env
-SIMULATION_MODE=gazebo
-GAZEBO_URL=http://localhost:8081
+# Terminal 1 — Launch Gazebo with Quadrotor Model
+source /opt/ros/humble/setup.bash
+ros2 launch simulation/launch/quadrotor_sim.launch.py
 
-# 2. Start Gazebo
-gazebo --verbose
+# Terminal 2 — Start FastAPI Gateway (Port 8000)
+cd backend
+export SIMULATION_MODE=gazebo
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-# 3. Spawn drone model
-ros2 run gazebo_ros spawn_entity.py -entity quadrotor -file models/quadrotor/model.sdf
-
-# 4. Start backend
-uvicorn app.main:app --reload
+# Terminal 3 — Open React Dashboard
+cd frontend
+npm run dev
 ```
-
-The UI header will change from `DEMO SIMULATION` to `GAZEBO CONNECTED`.
+The GCS header will turn **GAZEBO ACTIVE** and **ROS2 ACTIVE** green only when live physics and rosbridge streams are detected. If Gazebo is offline, the header truthfully reflects **GAZEBO: DISCONNECTED**.
 
 ---
 
@@ -478,11 +473,12 @@ ENABLE_TELEMETRY_PERSISTENCE=true
 
 ---
 
-## Future Improvements
+## Future Improvements & Implementation Status
 
-- [ ] Implement real `GazeboSimulationAdapter`
-- [ ] Implement real `ROS2Adapter` using rosbridge protocol
-- [ ] Add YOLO object detection in the CV pipeline
+- [x] Implement real `GazeboSimulationAdapter` (Dual Gazebo Classic & Sim support)
+- [x] Implement real `ROS2Adapter` using rosbridge protocol
+- [x] Simulation assets (Quadrotor SDF model, test world, launch files, mock ROS2 node)
+- [ ] Add YOLO model weights for live inference in CV pipeline
 - [ ] Add 3D drone visualization using Three.js
 - [ ] Add waypoint mission planning on a 2D map
 - [ ] Add experiment data export (CSV, JSON)
