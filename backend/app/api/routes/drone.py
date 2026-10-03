@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 from app.schemas.drone import CommandResponse
 from pydantic import BaseModel
-import app.main as m # hacky access to adapter
+import app.main as m
+from app.services.log_service import log_service
 
 router = APIRouter()
 
@@ -16,6 +17,7 @@ class MoveCommand(BaseModel):
 @router.post("/move")
 async def move_drone(cmd: MoveCommand):
     success = await m.adapter.send_drone_command("MOVE", {"direction": cmd.direction, "speed": cmd.speed})
+    log_service.add_log("INFO", f"Flight Maneuver: Vector {cmd.direction.upper()} at {cmd.speed} m/s", "FLIGHT_CONTROLLER")
     return CommandResponse(
         success=success,
         message=f"Moving {cmd.direction} at {cmd.speed}",
@@ -29,6 +31,8 @@ async def command_drone(command: str):
     valid_cmds = ["ARM", "DISARM", "TAKEOFF", "LAND", "HOVER", "STOP"]
     if cmd in valid_cmds:
         success = await m.adapter.send_drone_command(cmd, {})
+        level = "WARN" if cmd == "STOP" else "INFO"
+        log_service.add_log(level, f"Flight Command Dispatched: {cmd}", "FLIGHT_CONTROLLER")
         return CommandResponse(
             success=success,
             message=f"Command {cmd} executed",

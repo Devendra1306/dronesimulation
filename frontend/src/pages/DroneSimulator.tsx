@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import Panel from '../components/common/Panel';
 import DroneControls from '../components/drone/DroneControls';
+import PrimaryFlightDisplay from '../components/drone/PrimaryFlightDisplay';
+import { useAppStore } from '../store/appStore';
 import { getSimulationStatus, startSimulation, pauseSimulation, resetSimulation } from '../services/api';
-import { Play, Pause, RotateCcw, FastForward, Activity, Video, Terminal, Radio } from 'lucide-react';
+import { Play, Pause, RotateCcw } from 'lucide-react';
 
 export default function DroneSimulator() {
+  const { state } = useAppStore();
   const [simState, setSimState] = useState<{
     running: boolean;
     sim_time: number;
@@ -149,19 +152,9 @@ export default function DroneSimulator() {
                 </div>
               </div>
 
-              {/* Grid / Horizon line mockup */}
-              <div className="w-full h-full flex items-center justify-center relative bg-gradient-to-b from-surface-2 to-surface-0">
-                <div className="w-full h-px bg-accent/20 absolute"></div>
-                <div className="h-full w-px bg-accent/20 absolute"></div>
-                <div className="text-center text-text-muted text-xs z-0 flex flex-col items-center gap-2">
-                  <Video className="w-8 h-8 opacity-30 text-accent animate-pulse" />
-                  <span className="font-mono text-2xs uppercase tracking-widest text-text-secondary">
-                    {simState.running ? 'SITL Rendering Viewport Active' : 'Simulation Engine Paused'}
-                  </span>
-                  <span className="text-3xs text-text-muted">
-                    Switch adapter to Gazebo in settings to stream 3D WebRTC / ROS2 gz-bridge frames
-                  </span>
-                </div>
+              {/* Real-time Primary Flight Display / Synthetic Camera Feed */}
+              <div className="w-full h-full relative">
+                <PrimaryFlightDisplay telemetry={state.telemetry} isRunning={simState.running} />
               </div>
             </div>
           </Panel>

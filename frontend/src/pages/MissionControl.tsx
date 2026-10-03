@@ -1,20 +1,27 @@
-import { useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import DroneVisualizer from '../components/drone/DroneVisualizer';
 import TelemetryPanel from '../components/drone/TelemetryPanel';
 import DroneControls from '../components/drone/DroneControls';
 import TelemetryChart from '../components/charts/TelemetryChart';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAppStore } from '../store/appStore.tsx';
+import { getTelemetry } from '../services/api';
 import type { TelemetryData } from '../types';
 
 export default function MissionControl() {
   const { state, dispatch } = useAppStore();
   const [chartData, setChartData] = useState<TelemetryData[]>([]);
-  const [wsConnected, setWsConnected] = useState(false);
+
+  // Instant baseline fetch on mount
+  useEffect(() => {
+    getTelemetry().then(res => {
+      dispatch({ type: 'SET_TELEMETRY', payload: res.data });
+      setChartData([res.data]);
+    }).catch(() => {});
+  }, [dispatch]);
 
   const onMessage = useCallback((data: TelemetryData) => {
     dispatch({ type: 'SET_TELEMETRY', payload: data });
-    setWsConnected(true);
     setChartData(prev => [...prev, data].slice(-80));
   }, [dispatch]);
 

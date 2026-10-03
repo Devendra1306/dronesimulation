@@ -82,6 +82,11 @@ export default function ComputerVision() {
     try {
       const formData = new FormData();
       formData.append('file', fileObject);
+      formData.append('grayscale', String(pipelineOptions.grayscale));
+      formData.append('gaussian_blur', String(pipelineOptions.gaussianBlur));
+      formData.append('canny_edge', String(pipelineOptions.cannyEdge));
+      formData.append('threshold', String(pipelineOptions.threshold));
+      formData.append('contour_detection', String(pipelineOptions.contourDetection));
       const res = await processImage(formData);
       setProcessedResult(res.data);
     } catch (err) {

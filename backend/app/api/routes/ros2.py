@@ -56,58 +56,65 @@ async def get_nodes():
         }
     ]
 
+import app.main as m
+
 @router.get("/topics")
 async def get_topics():
+    mode = getattr(m.adapter, "mode", "IDLE")
+    is_active_flight = mode in ["TAKING_OFF", "MOVING", "LANDING", "HOVERING"]
+    cmd_vel_rate = 20.0 if mode in ["TAKING_OFF", "MOVING", "LANDING"] else 0.0
+    cmd_vel_status = "ACTIVE" if cmd_vel_rate > 0 else "IDLE"
+
     return [
         {
             "name": "/camera/image_raw",
             "type": "sensor_msgs/Image",
             "publisher": "camera_node",
             "subscribers": ["cv_node"],
-            "rate": 30.0,
+            "rate": 30.0 if is_active_flight else 15.0,
             "status": "ACTIVE",
             "last_received": time.time(),
-            "source": "DEMO_SIMULATION"
+            "source": m.adapter.adapter_name
         },
         {
             "name": "/imu/data",
             "type": "sensor_msgs/Imu",
             "publisher": "imu_node",
-            "subscribers": [],
-            "rate": 50.0,
+            "subscribers": ["drone_controller"],
+            "rate": 100.0 if is_active_flight else 50.0,
             "status": "ACTIVE",
             "last_received": time.time(),
-            "source": "DEMO_SIMULATION"
+            "source": m.adapter.adapter_name
         },
         {
             "name": "/gps/fix",
             "type": "sensor_msgs/NavSatFix",
             "publisher": "gps_node",
-            "subscribers": [],
+            "subscribers": ["drone_controller"],
             "rate": 10.0,
             "status": "ACTIVE",
             "last_received": time.time(),
-            "source": "DEMO_SIMULATION"
+            "source": m.adapter.adapter_name
         },
         {
             "name": "/cmd_vel",
             "type": "geometry_msgs/Twist",
-            "publisher": "",
-            "subscribers": ["drone_controller"],
-            "rate": 0.0,
-            "status": "IDLE",
+            "publisher": "drone_controller",
+            "subscribers": ["simulation_gazebo"],
+            "rate": cmd_vel_rate,
+            "status": cmd_vel_status,
             "last_received": time.time(),
-            "source": "DEMO_SIMULATION"
+            "source": m.adapter.adapter_name
         },
         {
             "name": "/detections",
             "type": "vision_msgs/Detection2DArray",
             "publisher": "cv_node",
-            "subscribers": [],
-            "rate": 15.0,
-            "status": "ACTIVE",
+            "subscribers": ["mission_planner"],
+            "rate": 15.0 if is_active_flight else 0.0,
+            "status": "ACTIVE" if is_active_flight else "IDLE",
             "last_received": time.time(),
-            "source": "DEMO_SIMULATION"
+            "source": m.adapter.adapter_name
         },
         {
             "name": "/drone/state",
@@ -115,18 +122,18 @@ async def get_topics():
             "publisher": "drone_controller",
             "subscribers": ["mission_planner"],
             "rate": 10.0,
-            "status": "ACTIVE",
+            "status": "ACTIVE" if is_active_flight else "STANDBY",
             "last_received": time.time(),
-            "source": "DEMO_SIMULATION"
+            "source": m.adapter.adapter_name
         },
         {
             "name": "/mission/status",
             "type": "std_msgs/String",
             "publisher": "mission_planner",
-            "subscribers": [],
-            "rate": 1.0,
+            "subscribers": ["gcs_bridge"],
+            "rate": 2.0,
             "status": "ACTIVE",
             "last_received": time.time(),
-            "source": "DEMO_SIMULATION"
+            "source": m.adapter.adapter_name
         }
     ]

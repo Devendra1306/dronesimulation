@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import TelemetryChart from '../components/charts/TelemetryChart';
 import { useWebSocket } from '../hooks/useWebSocket';
 import type { TelemetryData } from '../types';
+import { getTelemetry } from '../services/api';
 import { Activity, Navigation, Battery, Radio, Camera, Cpu } from 'lucide-react';
 
 interface SensorCardProps {
@@ -33,6 +34,12 @@ function SensorCard({ label, value, unit, ok, icon: Icon }: SensorCardProps) {
 
 export default function SensorData() {
   const [history, setHistory] = useState<TelemetryData[]>([]);
+
+  useEffect(() => {
+    getTelemetry().then(res => {
+      setHistory([res.data]);
+    }).catch(() => {});
+  }, []);
 
   const onMessage = useCallback((data: TelemetryData) => {
     setHistory(prev => [...prev, data].slice(-120));

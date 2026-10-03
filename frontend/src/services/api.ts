@@ -24,6 +24,7 @@ export const resetSimulation = () => api.post('/api/simulation/reset');
 export const processImage = (formData: FormData) => api.post('/api/cv/process', formData);
 export const analyzeData = (formData: FormData) => api.post('/api/data/analyze', formData);
 export const getEdgeDevices = () => api.get<EdgeDevice[]>('/api/edge/devices');
+export const runEdgeBenchmark = () => api.post('/api/edge/benchmark');
 export const getLogs = () => api.get<LogEntry[]>('/api/logs');
 
 export default api;

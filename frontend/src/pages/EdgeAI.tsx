@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { getEdgeDevices } from '../services/api';
+import { getEdgeDevices, runEdgeBenchmark } from '../services/api';
 import type { EdgeDevice } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Cpu, Zap, Database, Clock } from 'lucide-react';
+import { Cpu, Zap, Database, Clock, Play, RefreshCw, CheckCircle } from 'lucide-react';
 
 const COLORS = ['#1a9fd4', '#22c55e', '#f59e0b', '#a855f7'];
 
@@ -71,19 +71,68 @@ function DeviceRow({ device, i }: { device: EdgeDevice; i: number }) {
 
 export default function EdgeAI() {
   const [devices, setDevices] = useState<EdgeDevice[]>([]);
+  const [benchmarking, setBenchmarking] = useState(false);
+  const [benchResult, setBenchResult] = useState<any | null>(null);
 
   useEffect(() => {
     getEdgeDevices().then(r => setDevices(r.data)).catch(() => {});
   }, []);
 
-  const chartData = devices.map(d => ({ name: d.name.replace('NVIDIA ', ''), ms: d.inference_time_ms }));
+  const handleBenchmark = async () => {
+    setBenchmarking(true);
+    try {
+      const res = await runEdgeBenchmark();
+      setBenchResult(res.data);
+      // Append or update in devices list
+      setDevices(prev => {
+        const withoutHost = prev.filter(d => !d.name.includes('Host'));
+        return [
+          ...withoutHost,
+          {
+            name: 'Active Host (Measured)',
+            inference_time_ms: res.data.inference_time_ms,
+            fps: res.data.fps,
+            memory_mb: res.data.memory_mb,
+            model: res.data.model,
+            power_watts: res.data.power_watts,
+            source: 'MEASURED_HOST_HARDWARE',
+          },
+        ];
+      });
+    } catch (err) {
+      console.error('Benchmark failed:', err);
+    } finally {
+      setBenchmarking(false);
+    }
+  };
+
+  const chartData = devices.map(d => ({ name: d.name.replace('NVIDIA ', '').replace('Active ', ''), ms: d.inference_time_ms }));
 
   return (
     <div className="flex flex-col gap-4 h-full overflow-y-auto">
       {/* Header */}
-      <div className="flex items-center gap-3 shrink-0">
-        <h2 className="text-base font-bold text-text-primary">Edge AI</h2>
-        <span className="badge-demo">DEMO / SAMPLE DATA</span>
+      <div className="flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <h2 className="text-base font-bold text-text-primary">Edge AI Hardware & Inference Benchmarking</h2>
+          <span className="badge-demo">EMBEDDED TARGET PROFILING</span>
+        </div>
+        <button
+          onClick={handleBenchmark}
+          disabled={benchmarking}
+          className="btn-primary text-xs flex items-center gap-1.5 py-1.5 px-3 font-semibold disabled:opacity-50"
+        >
+          {benchmarking ? (
+            <>
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              Executing CNN GEMM Layer on Host...
+            </>
+          ) : (
+            <>
+              <Play className="w-3.5 h-3.5" />
+              Benchmark Active Host Machine
+            </>
+          )}
+        </button>
       </div>
 
       {/* Explainer cards */}
