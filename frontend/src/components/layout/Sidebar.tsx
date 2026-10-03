@@ -1,16 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  Navigation, Plane, Network, Eye, Radio, 
-  Cpu, FlaskConical, Terminal, Settings 
+  Navigation, Plane, Eye, 
+  FlaskConical, Terminal, Settings 
 } from 'lucide-react';
 
 const NAV_ITEMS = [
   { icon: Navigation, label: 'Mission Control', path: '/' },
   { icon: Plane, label: 'Drone Simulator', path: '/simulator' },
-  { icon: Network, label: 'ROS2 & Gazebo', path: '/ros2' },
   { icon: Eye, label: 'Drone Vision', path: '/cv' },
-  { icon: Radio, label: 'Flight Sensors', path: '/sensors' },
-  { icon: Cpu, label: 'UAV Edge AI', path: '/edge' },
   { icon: FlaskConical, label: 'Simulation Experiments', path: '/experiments' },
   { icon: Terminal, label: 'System Logs', path: '/logs' },
   { icon: Settings, label: 'Settings', path: '/settings' },

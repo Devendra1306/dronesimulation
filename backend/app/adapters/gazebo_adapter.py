@@ -132,7 +132,12 @@ class GazeboSimulationAdapter(SimulationAdapter):
                 try:
                     logger.info(f"Connecting to rosbridge at {self.bridge_url}...")
                     self._ws = await asyncio.wait_for(
-                        websockets.connect(self.bridge_url, ping_interval=10, ping_timeout=10),
+                        websockets.connect(
+                            self.bridge_url,
+                            ping_interval=10,
+                            ping_timeout=10,
+                            max_size=10 * 1024 * 1024
+                        ),
                         timeout=3.0
                     )
                     self._bridge_connected = True
@@ -225,9 +230,10 @@ class GazeboSimulationAdapter(SimulationAdapter):
                     elif topic == "/camera/image_raw":
                         self._handle_camera(payload)
                 except Exception as ex:
-                    logger.debug(f"Error parsing Gazebo message: {ex}")
+                    logger.warning(f"Error parsing Gazebo message: {ex}")
         except Exception as e:
-            log_service.add_log("WARN", f"rosbridge connection interrupted: {e}", "ROS2_BRIDGE")
+            logger.error(f"rosbridge connection interrupted: {type(e).__name__}: {e}")
+            log_service.add_log("WARN", f"rosbridge connection interrupted: {type(e).__name__}: {e}", "ROS2_BRIDGE")
             self._bridge_connected = False
             self._physics_running = False
             self.signal_strength = 0.0

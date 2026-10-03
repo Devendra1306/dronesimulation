@@ -9,8 +9,8 @@ class Settings(BaseSettings):
     simulation_mode: str = "demo"  # "demo" | "ros2" | "gazebo"
     demo_telemetry_rate: float = 10.0  # Hz
     database_url: str = "sqlite:///./roboedge.db"
-    ros2_bridge_url: str = "ws://localhost:9090"
-    gazebo_url: str = "http://localhost:8081"
+    ros2_bridge_url: str = "ws://127.0.0.1:9090"
+    gazebo_url: str = "http://127.0.0.1:8081"
     cv_model_path: str = "models/yolo.pt"
     secret_key: str = "change-this-in-production"
     
