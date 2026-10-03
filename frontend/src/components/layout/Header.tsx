@@ -11,8 +11,8 @@ interface StatusPipProps {
 function StatusPip({ connected, label }: StatusPipProps) {
   return (
     <div className="flex items-center gap-1.5">
-      <div className={`status-dot ${connected ? 'bg-status-green' : 'bg-surface-5'}`} />
-      <span className={`text-xs font-medium ${connected ? 'text-text-secondary' : 'text-text-muted'}`}>{label}</span>
+      <div className={`status-dot ${connected ? 'bg-status-green ring-2 ring-status-green/20' : 'bg-surface-5'}`} />
+      <span className={`text-[11px] font-mono tracking-wider ${connected ? 'text-text-primary' : 'text-text-muted'}`}>{label}</span>
     </div>
   );
 }
@@ -42,58 +42,62 @@ export default function Header() {
     };
 
     fetchStatus();
-    const interval = setInterval(fetchStatus, 5000);
+    const interval = setInterval(fetchStatus, 4000);
     return () => clearInterval(interval);
   }, []);
 
   const dbConnected = dbStatus?.connected ?? false;
-
   const isDemo = status?.is_demo ?? true;
   const ros2Connected = status?.ros2_connected ?? false;
   const gazeboConnected = status?.gazebo_connected ?? false;
 
+  const modeBadge = isDemo ? (
+    <span className="badge-demo text-[10px] font-mono">DEMO SIMULATION</span>
+  ) : gazeboConnected ? (
+    <span className="badge-active text-[10px] font-mono">GAZEBO ACTIVE</span>
+  ) : ros2Connected ? (
+    <span className="badge-active text-[10px] font-mono">ROS2 ACTIVE</span>
+  ) : (
+    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-4 text-text-muted border border-border">ROS2 STANDBY</span>
+  );
+
   return (
-    <header className="h-12 bg-surface-2 border-b border-border-subtle flex items-center justify-between px-5 shrink-0">
-      {/* Left: app name + mode */}
+    <header className="h-12 bg-surface-2 border-b border-border-subtle flex items-center justify-between px-5 shrink-0 select-none">
+      {/* Left: App Identity + Simulation Mode */}
       <div className="flex items-center gap-3">
-        <span className="text-text-muted text-xs uppercase tracking-widest font-medium">RoboEdge AI Lab</span>
-        <div className="h-4 w-px bg-border-subtle" />
-        <span className="text-xs font-mono font-medium text-text-muted">
-          ENV:
+        <span className="text-text-secondary text-xs uppercase tracking-widest font-mono font-semibold">
+          ROBOEDGE UAS LAB
         </span>
-        {isDemo ? (
-          <span className="badge-demo">DEMO SIMULATION</span>
-        ) : gazeboConnected ? (
-          <span className="badge-active">GAZEBO</span>
-        ) : (
-          <span className="badge-active">ROS2</span>
-        )}
+        <div className="h-4 w-px bg-border-subtle" />
+        <span className="text-[11px] font-mono text-text-muted">MODE:</span>
+        {modeBadge}
       </div>
 
-      {/* Right: status indicators */}
+      {/* Center/Right: GCS Subsystem Status (MODE | ROS2 | GAZEBO | TELEMETRY | DATABASE) */}
       <div className="flex items-center gap-5">
-        <div className="flex items-center gap-4">
-          <StatusPip connected={wsConnected} label="SIM" />
+        <div className="flex items-center gap-4 bg-surface-1/60 px-3 py-1 rounded-md border border-border-subtle">
+          <StatusPip connected={wsConnected} label="TELEMETRY" />
+          <div className="h-3 w-px bg-border-subtle" />
           <StatusPip connected={ros2Connected} label="ROS2" />
+          <div className="h-3 w-px bg-border-subtle" />
           <StatusPip connected={gazeboConnected} label="GAZEBO" />
+          <div className="h-3 w-px bg-border-subtle" />
           <div className="flex items-center gap-1.5" title={dbStatus?.message || (dbConnected ? "MongoDB Atlas Connected" : "MongoDB Offline")}>
-            <div className={`status-dot ${dbConnected ? 'bg-status-green' : 'bg-surface-5 border border-text-muted/40'}`} />
-            <span className={`text-xs font-medium ${dbConnected ? 'text-text-secondary' : 'text-text-muted'}`}>
-              MongoDB
+            <div className={`status-dot ${dbConnected ? 'bg-status-green ring-2 ring-status-green/20' : 'bg-surface-5'}`} />
+            <span className={`text-[11px] font-mono tracking-wider ${dbConnected ? 'text-text-primary' : 'text-text-muted'}`}>
+              DATABASE
             </span>
           </div>
         </div>
 
-        <div className="h-4 w-px bg-border-subtle" />
-
         <div className="flex items-center gap-1.5 text-xs">
           {wsConnected ? (
-            <Wifi className="w-3.5 h-3.5 text-text-muted" />
+            <Wifi className="w-3.5 h-3.5 text-status-green" />
           ) : (
-            <WifiOff className="w-3.5 h-3.5 text-text-muted" />
+            <WifiOff className="w-3.5 h-3.5 text-status-red" />
           )}
-          <span className="font-mono text-text-secondary">
-            {latency !== null ? `${latency}ms` : '—'}
+          <span className="font-mono text-text-secondary text-[11px]">
+            {latency !== null ? `${latency}ms` : 'OFFLINE'}
           </span>
         </div>
 

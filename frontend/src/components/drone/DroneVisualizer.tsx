@@ -6,6 +6,7 @@ interface DroneVisualizerProps {
   isAirborne?: boolean;
   pitch?: number;
   roll?: number;
+  source?: string;
 }
 
 export default function DroneVisualizer({
@@ -16,6 +17,7 @@ export default function DroneVisualizer({
   isAirborne = false,
   pitch = 0,
   roll = 0,
+  source = 'DEMO_SIMULATION',
 }: DroneVisualizerProps) {
   const scale = Math.max(0.7, Math.min(1.3, 1 + altitude / 80));
   const cx = 160;
@@ -35,13 +37,21 @@ export default function DroneVisualizer({
 
   const statusColor = modeColor[mode] ?? '#4d6380';
 
+  const isDemo = source === 'DEMO_SIMULATION' || source.includes('DEMO');
+
   return (
     <div className="relative w-full h-full bg-surface-1 rounded-lg overflow-hidden flex flex-col">
       {/* Header bar */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-subtle bg-surface-2 shrink-0">
         <div className="flex items-center gap-2">
-          <span className="telemetry-label">DRONE VISUALIZATION</span>
-          <span className="badge-demo">DEMO SIMULATION</span>
+          <span className="telemetry-label font-mono">UAS ATTITUDE & SPATIAL HUD</span>
+          {isDemo ? (
+            <span className="badge-demo text-[10px] font-mono">DEMO SIMULATION</span>
+          ) : source.includes('GAZEBO') ? (
+            <span className="badge-active text-[10px] font-mono">GAZEBO MODEL</span>
+          ) : (
+            <span className="badge-active text-[10px] font-mono">ROS2 TELEMETRY</span>
+          )}
         </div>
         <div className="flex items-center gap-3 text-xs font-mono">
           <span className="text-text-muted">ALT</span>

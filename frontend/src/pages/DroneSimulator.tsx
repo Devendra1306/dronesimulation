@@ -77,9 +77,13 @@ export default function DroneSimulator() {
       {/* Page Title & Simulator Controls */}
       <div className="flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <h2 className="text-base font-bold text-text-primary">Drone Simulator SITL Workspace</h2>
-          <span className="badge-demo">DEMO SIMULATION</span>
-          <span className="text-xs text-text-muted">Target Bridge: Gazebo / Webots Ready</span>
+          <h2 className="text-base font-bold text-text-primary font-mono tracking-tight">Drone Simulator SITL Workspace</h2>
+          {simState.source.includes('GAZEBO') ? (
+            <span className="badge-active text-[10px] font-mono">GAZEBO PHYSICS ACTIVE</span>
+          ) : (
+            <span className="badge-demo text-[10px] font-mono">DEMO SITL PHYSICS</span>
+          )}
+          <span className="text-xs text-text-muted font-mono">{simState.drone_model} · {simState.world_name}</span>
         </div>
 
         <div className="flex items-center gap-2">

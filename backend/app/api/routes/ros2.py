@@ -135,5 +135,15 @@ async def get_topics():
             "status": "ACTIVE",
             "last_received": time.time(),
             "source": m.adapter.adapter_name
+        },
+        {
+            "name": "/odom",
+            "type": "nav_msgs/Odometry",
+            "publisher": "simulation_gazebo",
+            "subscribers": ["drone_controller"],
+            "rate": 50.0 if is_active_flight else 20.0,
+            "status": "ACTIVE",
+            "last_received": time.time(),
+            "source": m.adapter.adapter_name
         }
     ]

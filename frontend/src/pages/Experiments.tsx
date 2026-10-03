@@ -115,12 +115,12 @@ export default function Experiments() {
       {/* Page Header */}
       <div className="flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <h2 className="text-base font-bold text-text-primary">Research & Experiment Registry</h2>
-          <span className="badge-active flex items-center gap-1 font-mono">
+          <h2 className="text-base font-bold text-text-primary font-mono tracking-tight">Simulation Experiments & Flight Trials</h2>
+          <span className="badge-active flex items-center gap-1 font-mono text-[10px]">
             <Database className="w-3 h-3" />
-            MONGODB PERSISTENCE
+            MONGODB ATLAS PERSISTENCE
           </span>
-          <span className="text-xs text-text-muted">{experiments.length} trials recorded</span>
+          <span className="text-xs text-text-muted font-mono">{experiments.length} trials recorded</span>
         </div>
         <div className="flex items-center gap-2">
           <button

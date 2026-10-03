@@ -9,6 +9,7 @@ from app.db.indexes import create_indexes
 from app.config import settings
 from app.adapters.demo_adapter import DemoSimulationAdapter
 from app.adapters.ros2_adapter import ROS2Adapter
+from app.adapters.gazebo_adapter import GazeboSimulationAdapter
 from app.api.routes import (
     system, drone, simulation, ros2, cv, data, edge, logs,
     database, experiments, simulation_runs, telemetry_history,
@@ -17,7 +18,13 @@ from app.api.routes import (
 from app.api.websockets import telemetry, ros2_ws, logs_ws
 
 def get_simulation_adapter():
-    if settings.simulation_mode.lower() == "ros2":
+    mode = settings.simulation_mode.lower()
+    if mode == "gazebo":
+        return GazeboSimulationAdapter(
+            bridge_url=settings.ros2_bridge_url,
+            gazebo_url=settings.gazebo_url
+        )
+    elif mode == "ros2":
         return ROS2Adapter(bridge_url=settings.ros2_bridge_url)
     return DemoSimulationAdapter()
 

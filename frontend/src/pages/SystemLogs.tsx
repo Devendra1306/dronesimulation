@@ -96,11 +96,11 @@ export default function SystemLogs() {
       {/* Header */}
       <div className="flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <h2 className="text-base font-bold text-text-primary">System Logs</h2>
+          <h2 className="text-base font-bold text-text-primary font-mono tracking-tight">Avionics & Simulation Engineering Logs</h2>
           <div className="flex items-center gap-1.5">
             <div className={`status-dot ${connected ? 'bg-status-green' : 'bg-surface-5'}`} />
             <span className="text-xs text-text-muted font-mono">
-              {connected ? 'LIVE' : 'OFFLINE'}
+              {connected ? 'LIVE STREAM' : 'OFFLINE'}
             </span>
           </div>
           <span className="text-xs text-text-muted">{filtered.length} entries</span>

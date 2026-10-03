@@ -5,7 +5,6 @@ import DroneSimulator from './pages/DroneSimulator';
 import ROS2Lab from './pages/ROS2Lab';
 import ComputerVision from './pages/ComputerVision';
 import SensorData from './pages/SensorData';
-import DataAnalysis from './pages/DataAnalysis';
 import EdgeAI from './pages/EdgeAI';
 import Experiments from './pages/Experiments';
 import SystemLogs from './pages/SystemLogs';
@@ -21,7 +20,6 @@ function App() {
           <Route path="/ros2" element={<ROS2Lab />} />
           <Route path="/cv" element={<ComputerVision />} />
           <Route path="/sensors" element={<SensorData />} />
-          <Route path="/data" element={<DataAnalysis />} />
           <Route path="/edge" element={<EdgeAI />} />
           <Route path="/experiments" element={<Experiments />} />
           <Route path="/logs" element={<SystemLogs />} />

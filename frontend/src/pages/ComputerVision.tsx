@@ -97,13 +97,13 @@ export default function ComputerVision() {
   };
 
   return (
-    <div className="flex flex-col gap-4 h-full min-h-0">
+    <div className="flex flex-col gap-3 h-full min-h-0">
       {/* Top Banner */}
       <div className="flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <h2 className="text-base font-bold text-text-primary">Computer Vision Lab</h2>
-          <span className="badge-demo">DEMO / OPENCV BACKEND</span>
-          <span className="text-xs text-text-muted">OpenCV Core • Edge Detection • Target Extraction</span>
+          <h2 className="text-base font-bold text-text-primary font-mono tracking-tight">Drone Camera / Computer Vision</h2>
+          <span className="badge-demo text-[10px] font-mono">OPENCV PIPELINE</span>
+          <span className="text-xs text-text-muted">Aerial Target Identification • Edge Detection • Horizon & Contour Extraction</span>
         </div>
         <button
           onClick={loadSampleImage}
@@ -112,6 +112,25 @@ export default function ComputerVision() {
           <RefreshCw className="w-3.5 h-3.5" />
           Load Synthetic UAV Target
         </button>
+      </div>
+
+      {/* Robotics Architecture Pipeline Breadcrumb */}
+      <div className="bg-surface-2 border border-border-subtle rounded-lg px-3 py-1.5 flex items-center justify-between text-2xs font-mono text-text-muted shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="text-accent font-semibold">UAS VISION PIPELINE:</span>
+          <span>Drone Camera</span>
+          <span className="text-border-strong">→</span>
+          <span className="text-accent/90">ROS2 /camera/image_raw</span>
+          <span className="text-border-strong">→</span>
+          <span className="text-text-primary">OpenCV Filters</span>
+          <span className="text-border-strong">→</span>
+          <span>Target / Landing Detection</span>
+          <span className="text-border-strong">→</span>
+          <span className="text-accent/90">/detections</span>
+          <span className="text-border-strong">→</span>
+          <span>Flight Decision</span>
+        </div>
+        <span className="text-text-muted/80">YOLO Model: Standby (Loads via Adapter)</span>
       </div>
 
       <div className="flex gap-4 flex-1 min-h-0">

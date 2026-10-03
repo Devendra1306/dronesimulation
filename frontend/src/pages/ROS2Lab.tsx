@@ -176,14 +176,22 @@ export default function ROS2Lab() {
     t.type.toLowerCase().includes(search.toLowerCase())
   );
 
+  const isReal = topics.some(t => t.source && !t.source.includes('DEMO'));
+
   return (
     <div className="flex flex-col gap-4 h-full min-h-0">
       {/* Header */}
       <div className="flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <h2 className="text-base font-bold text-text-primary tracking-tight">ROS2 Lab</h2>
-          <span className="badge-demo">DEMO SIMULATION</span>
-          <span className="text-text-muted text-xs">{nodes.length} nodes · {topics.length} topics</span>
+          <h2 className="text-base font-bold text-text-primary tracking-tight font-mono">
+            ROS2 & Gazebo Drone Robotics Lab
+          </h2>
+          {isReal ? (
+            <span className="badge-active text-[10px] font-mono">REAL ROS2 / GAZEBO ACTIVE</span>
+          ) : (
+            <span className="badge-demo text-[10px] font-mono">SIMULATED ROS2 TOPICS</span>
+          )}
+          <span className="text-text-muted text-xs font-mono">{nodes.length} nodes · {topics.length} topics</span>
         </div>
         <button
           className="btn-secondary flex items-center gap-2 text-xs py-1.5 px-3"
@@ -191,7 +199,7 @@ export default function ROS2Lab() {
           disabled={loading}
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          Refresh Topics
         </button>
       </div>
 

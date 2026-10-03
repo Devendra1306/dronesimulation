@@ -49,6 +49,7 @@ export default function MissionControl() {
             isAirborne={telem?.is_airborne}
             pitch={telem?.pitch}
             roll={telem?.roll}
+            source={telem?.source}
           />
         </div>
 
