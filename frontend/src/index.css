@@ -20,3 +20,29 @@
   .badge-demo { @apply text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-400; }
   .badge-error { @apply text-xs font-medium px-2 py-0.5 rounded bg-status-red-dim text-status-red; }
 }
+
+@keyframes spin-cw {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spin-ccw {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+.animate-spin-cw {
+  animation: spin-cw 0.12s linear infinite;
+  transform-origin: center;
+}
+
+.animate-spin-ccw {
+  animation: spin-ccw 0.12s linear infinite;
+  transform-origin: center;
+}
+
+.animate-spin-idle {
+  animation: spin-cw 0.8s linear infinite;
+  transform-origin: center;
+}
+
