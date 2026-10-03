@@ -5,6 +5,24 @@ import app.main as m # hacky access to adapter
 
 router = APIRouter()
 
+@router.get("/telemetry")
+async def get_telemetry():
+    return await m.adapter.get_telemetry()
+
+class MoveCommand(BaseModel):
+    direction: str
+    speed: float = 1.0
+
+@router.post("/move")
+async def move_drone(cmd: MoveCommand):
+    success = await m.adapter.send_drone_command("MOVE", {"direction": cmd.direction, "speed": cmd.speed})
+    return CommandResponse(
+        success=success,
+        message=f"Moving {cmd.direction} at {cmd.speed}",
+        state="MOVING",
+        source=m.adapter.adapter_name
+    )
+
 @router.post("/{command}")
 async def command_drone(command: str):
     cmd = command.upper()
@@ -17,22 +35,4 @@ async def command_drone(command: str):
             state=cmd,
             source=m.adapter.adapter_name
         )
-    return {"error": "Invalid command"}
-
-class MoveCommand(BaseModel):
-    direction: str
-    speed: float
-
-@router.post("/move")
-async def move_drone(cmd: MoveCommand):
-    success = await m.adapter.send_drone_command("MOVE", {"direction": cmd.direction, "speed": cmd.speed})
-    return CommandResponse(
-        success=success,
-        message=f"Moving {cmd.direction} at {cmd.speed}",
-        state="MOVING",
-        source=m.adapter.adapter_name
-    )
-
-@router.get("/telemetry")
-async def get_telemetry():
-    return await m.adapter.get_telemetry()
+    return {"error": f"Invalid command: {command}"}
