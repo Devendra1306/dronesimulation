@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { @apply bg-surface-1 text-text-primary antialiased; }
+  body { @apply bg-surface-1 font-sans; }
+}
+
+@layer components {
+  .telemetry-value { @apply font-mono text-xl font-medium text-text-primary tracking-tight; }
+  .telemetry-label { @apply font-sans text-xs uppercase tracking-widest text-text-muted font-medium; }
+  .panel { @apply bg-surface-2 border border-border-subtle rounded-xl; }
+  .panel-header { @apply px-4 py-3 border-b border-border-subtle flex items-center justify-between; }
+  .status-dot { @apply w-1.5 h-1.5 rounded-full; }
+  .btn-primary { @apply bg-accent hover:bg-accent-light text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150; }
+  .btn-secondary { @apply bg-surface-4 hover:bg-surface-5 border border-border text-text-primary text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150; }
+  .btn-danger { @apply bg-status-red hover:opacity-90 text-white text-sm font-medium px-4 py-2 rounded-lg transition-all duration-150; }
+  .badge-active { @apply text-xs font-medium px-2 py-0.5 rounded bg-status-green-dim text-status-green; }
+  .badge-demo { @apply text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-400; }
+  .badge-error { @apply text-xs font-medium px-2 py-0.5 rounded bg-status-red-dim text-status-red; }
+}
