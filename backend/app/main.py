@@ -6,7 +6,9 @@ from app.services.log_service import log_service
 from app.db.mongodb import mongodb_manager
 from app.db.indexes import create_indexes
 
+from app.config import settings
 from app.adapters.demo_adapter import DemoSimulationAdapter
+from app.adapters.ros2_adapter import ROS2Adapter
 from app.api.routes import (
     system, drone, simulation, ros2, cv, data, edge, logs,
     database, experiments, simulation_runs, telemetry_history,
@@ -14,13 +16,18 @@ from app.api.routes import (
 )
 from app.api.websockets import telemetry, ros2_ws, logs_ws
 
-adapter = DemoSimulationAdapter()
+def get_simulation_adapter():
+    if settings.simulation_mode.lower() == "ros2":
+        return ROS2Adapter(bridge_url=settings.ros2_bridge_url)
+    return DemoSimulationAdapter()
+
+adapter = get_simulation_adapter()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 1. Connect Simulation Adapter
     await adapter.connect()
-    log_service.add_log("INFO", "Application started, Demo adapter connected", "SYSTEM")
+    log_service.add_log("INFO", f"Application started, {adapter.adapter_name} adapter active", "SYSTEM")
 
     # 2. Connect MongoDB with graceful non-blocking fallback
     mongo_ok = await mongodb_manager.connect()
