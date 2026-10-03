@@ -10,30 +10,36 @@ The system currently operates in **Demo Simulation Mode** — a fully functional
 
 ## Architecture
 
+```text
+                    React Frontend
+                         │
+              ┌──────────┴──────────┐
+              │                     │
+          REST API              WebSocket
+              │                     │
+              ▼                     ▼
+            FastAPI             ROS2 / Live Data
+              │
+       ┌──────┴───────────┐
+       │                  │
+       ▼                  ▼
+    MongoDB            ROS2 Adapter
+       │                  │
+       │                  ▼
+       │                Gazebo
+       │                  │
+       └──── Historical ──┘
+          persistence
 ```
-┌──────────────────────────────────────────────────┐
-│               React Frontend (Vite)              │
-│  Mission Control | ROS2 Lab | CV | Edge AI | ... │
-└────────────────────┬─────────────────────────────┘
-                     │  HTTP REST + WebSocket
-┌────────────────────▼─────────────────────────────┐
-│            FastAPI Backend (Python)               │
-│   /api/drone  /api/ros2  /api/cv  /ws/telemetry  │
-└────────────────────┬─────────────────────────────┘
-                     │  Service Layer
-┌────────────────────▼─────────────────────────────┐
-│              Simulation Adapter                   │
-│  ┌──────────────────┐  ┌────────────────────────┐│
-│  │ DemoSimulation   │  │  GazeboAdapter (future)││
-│  │ Adapter (active) │  │  ROS2Adapter (future)  ││
-│  └──────────────────┘  └────────────────────────┘│
-└────────────────────┬─────────────────────────────┘
-                     │  (future)
-┌────────────────────▼─────────────────────────────┐
-│              ROS2 Ecosystem                       │
-│   Gazebo | rosbridge | drone_controller nodes    │
-└──────────────────────────────────────────────────┘
-```
+
+### Real-Time vs Persistence Decoupling
+
+- **Real-Time Control Loop (Sub-millisecond / 10 Hz)**:
+  `React UI → FastAPI → SimulationAdapter / ROS2 → Gazebo → Simulated Drone`
+  MongoDB is strictly **decoupled** from the flight command and real-time control path.
+- **Historical Persistence Layer (Throttled 1 Hz)**:
+  `FastAPI → Motor AsyncIO → MongoDB Atlas / Local MongoDB`
+  Stores experiment records, throttled telemetry snapshots, sensor histories, OpenCV frame detections, simulation runs, and system events.
 
 ---
 
@@ -406,6 +412,59 @@ The backend uses **Pandas + NumPy** to compute:
 - Correlation matrix
 
 Download the processed dataset as a cleaned CSV.
+
+---
+
+## Database Architecture & MongoDB Integration
+
+RoboEdge AI Lab uses **MongoDB** as its persistent storage layer for non-real-time data (experiment registries, telemetry histories, sensor logs, computer vision detections, simulation runs, and system events).
+
+```text
+Real-time Control:
+React → FastAPI → ROS2 → Gazebo
+
+Historical Persistence:
+ROS2/Gazebo/SITL → FastAPI → Motor (AsyncIO) → MongoDB
+```
+
+### Why MongoDB?
+1. **Dynamic Sensor & Telemetry Documents**: UAV telemetry and multi-sensor structures (IMU accelerometer vectors, GPS NavSat fixes, barometer altimetry) vary in schema. MongoDB's BSON structure naturally accommodates heterogeneous sensor payloads without rigid table migrations.
+2. **Decoupled High-Frequency Data**: Live flight control streams at 10 Hz over WebSockets, while the persistence layer samples at a configurable rate (`TELEMETRY_DB_RATE_HZ=1`) to prevent uncontrolled disk inflation.
+3. **Graceful Fallback**: If MongoDB is unreachable, the system automatically runs in live Demo Simulation Mode with a non-blocking UI notice.
+
+### MongoDB Collections
+
+| Collection | Purpose | Key Indexes |
+|---|---|---|
+| `experiments` | Research trials, objectives, airframe model, algorithm configs | `experiment_id (unique)`, `status`, `created_at` |
+| `simulation_runs` | Individual execution runs, durations, SITL mode, completion status | `run_id (unique)`, `experiment_id + start_time` |
+| `telemetry` | Time-series flight coordinates, altitude, velocity, battery, attitude | `experiment_id + timestamp`, `timestamp` |
+| `sensor_data` | Multi-channel sensor records (IMU 3-axis, GPS, distance/proximity) | `experiment_id + timestamp`, `sensor_type` |
+| `cv_results` | Computer vision frames, detection lists, processing latency (ms) | `experiment_id + timestamp` |
+| `experiment_results` | Aggregated post-flight benchmarks (max alt, avg vel, CV accuracy) | `experiment_id (unique)`, `created_at` |
+| `system_events` | Critical flight commands (`ARM`, `TAKEOFF`, `STOP`), simulation errors | `severity + timestamp`, `event_type` |
+
+### Configuration
+
+#### Local MongoDB Setup
+```env
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DATABASE=roboedge_ai_lab
+TELEMETRY_DB_RATE_HZ=1
+ENABLE_TELEMETRY_PERSISTENCE=true
+```
+
+#### MongoDB Atlas Setup (Cloud Replica Set)
+```env
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.ecei9hd.mongodb.net/?retryWrites=true&w=majority
+MONGODB_DATABASE=roboedge_ai_lab
+TELEMETRY_DB_RATE_HZ=1
+ENABLE_TELEMETRY_PERSISTENCE=true
+```
+
+#### Running with vs without MongoDB
+- **With MongoDB**: Full persistence enabled. Experiments, flight history, and CV results persist across backend restarts and can be inspected in the **Experiments** registry or **Data Analysis** workbench.
+- **Without MongoDB**: If MongoDB is offline, `/api/database/status` reports `connected: false`, the header displays `MongoDB ○ Offline`, and live flight simulation, 60 FPS PFD HUD, and OpenCV filters continue operating normally in memory.
 
 ---
 

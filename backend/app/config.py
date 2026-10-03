@@ -13,5 +13,11 @@ class Settings(BaseSettings):
     gazebo_url: str = "http://localhost:8081"
     cv_model_path: str = "models/yolo.pt"
     secret_key: str = "change-this-in-production"
+    
+    # MongoDB configuration
+    mongodb_uri: str = "mongodb://localhost:27017"
+    mongodb_database: str = "roboedge_ai_lab"
+    telemetry_db_rate_hz: float = 1.0
+    enable_telemetry_persistence: bool = True
 
 settings = Settings()

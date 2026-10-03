@@ -68,13 +68,57 @@ export interface EdgeDevice {
 }
 
 export interface Experiment {
-  id: string;
+  experiment_id: string;
   name: string;
   description: string;
+  simulation_environment: string;
+  drone_model: string;
+  cv_algorithm: string;
+  status: string;
+  configuration?: Record<string, any>;
+  created_at: string;
+  started_at?: string;
+  ended_at?: string;
+  results?: Record<string, any>;
+}
+
+export interface DatabaseStatus {
+  connected: boolean;
+  database: string;
+  provider: string;
+  message?: string;
+  error?: string;
+}
+
+export interface SimulationRun {
+  run_id: string;
+  experiment_id?: string;
+  simulation_mode: string;
   environment: string;
-  algorithm: string;
-  status: 'Running' | 'Completed' | 'Failed' | 'Pending';
-  result?: string;
+  drone_model: string;
   start_time: string;
   end_time?: string;
+  duration?: number;
+  status: string;
+  configuration?: Record<string, any>;
+  summary?: Record<string, any>;
 }
+
+export interface HistoricalTelemetry {
+  experiment_id?: string;
+  run_id?: string;
+  timestamp: number;
+  altitude: number;
+  velocity: number;
+  latitude: number;
+  longitude: number;
+  heading: number;
+  pitch: number;
+  roll: number;
+  yaw: number;
+  battery: number;
+  signal: number;
+  flight_state: string;
+  source: string;
+}
+

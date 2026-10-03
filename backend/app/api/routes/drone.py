@@ -14,10 +14,19 @@ class MoveCommand(BaseModel):
     direction: str
     speed: float = 1.0
 
+from app.services.persistence_service import persistence_service
+
 @router.post("/move")
 async def move_drone(cmd: MoveCommand):
     success = await m.adapter.send_drone_command("MOVE", {"direction": cmd.direction, "speed": cmd.speed})
     log_service.add_log("INFO", f"Flight Maneuver: Vector {cmd.direction.upper()} at {cmd.speed} m/s", "FLIGHT_CONTROLLER")
+    await persistence_service.log_event(
+        event_type="DRONE_MOVE",
+        message=f"Direction: {cmd.direction.upper()}, Speed: {cmd.speed} m/s",
+        severity="INFO",
+        source="FLIGHT_CONTROLLER",
+        metadata={"direction": cmd.direction, "speed": cmd.speed}
+    )
     return CommandResponse(
         success=success,
         message=f"Moving {cmd.direction} at {cmd.speed}",
@@ -33,6 +42,13 @@ async def command_drone(command: str):
         success = await m.adapter.send_drone_command(cmd, {})
         level = "WARN" if cmd == "STOP" else "INFO"
         log_service.add_log(level, f"Flight Command Dispatched: {cmd}", "FLIGHT_CONTROLLER")
+        await persistence_service.log_event(
+            event_type=f"DRONE_{cmd}",
+            message=f"Command {cmd} executed via Mission Control",
+            severity="WARNING" if cmd == "STOP" else "INFO",
+            source="MISSION_CONTROL",
+            metadata={"command": cmd, "state": cmd}
+        )
         return CommandResponse(
             success=success,
             message=f"Command {cmd} executed",

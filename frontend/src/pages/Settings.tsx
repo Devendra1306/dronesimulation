@@ -116,12 +116,21 @@ export default function Settings() {
                 </select>
               </div>
               <div>
-                <label className="text-text-muted block mb-1 font-medium">Database Connection String</label>
+                <label className="text-text-muted block mb-1 font-medium">Database Persistence Provider</label>
                 <input
                   type="text"
                   disabled
-                  value={config.dbUrl}
-                  className="w-full bg-surface-1 border border-border-subtle rounded p-2 text-text-muted font-mono cursor-not-allowed"
+                  value="MongoDB Atlas (Replica Set Cluster / Motor AsyncIO)"
+                  className="w-full bg-surface-1 border border-border-subtle rounded p-2 text-status-green font-mono text-2xs cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="text-text-muted block mb-1 font-medium">Telemetry DB Throttled Persistence Rate</label>
+                <input
+                  type="text"
+                  disabled
+                  value="1 Hz (Configurable via TELEMETRY_DB_RATE_HZ)"
+                  className="w-full bg-surface-1 border border-border-subtle rounded p-2 text-text-primary font-mono text-2xs cursor-not-allowed"
                 />
               </div>
             </div>

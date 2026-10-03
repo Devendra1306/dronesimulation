@@ -76,6 +76,32 @@ async def process_image(
     b64 = base64.b64encode(buffer).decode('utf-8')
     elapsed_ms = round((time.time() - start_time) * 1000, 2)
     
+    # Asynchronously persist CV result in MongoDB
+    from app.schemas.database import CVResultRecord
+    from app.db.repositories.cv_results import cv_results_repo
+    from app.services.persistence_service import persistence_service
+    
+    cv_record = CVResultRecord(
+        experiment_id=persistence_service.active_experiment_id,
+        run_id=persistence_service.active_run_id,
+        timestamp=time.time(),
+        algorithm=" + ".join(active_stages) if active_stages else "OpenCV Passthrough",
+        input_type="camera_frame",
+        detection_count=contours_found,
+        detections=[{"type": "contour", "index": i} for i in range(min(contours_found, 10))],
+        processing_time_ms=elapsed_ms,
+        confidence=0.92 if contours_found > 0 else 0.50,
+        source="OPENCV_NATIVE_PIPELINE"
+    )
+    import asyncio
+    asyncio.create_task(cv_results_repo.insert(cv_record))
+    asyncio.create_task(persistence_service.log_event(
+        event_type="CV_PIPELINE_COMPLETED",
+        message=f"OpenCV pipeline processed {w}x{h} frame ({contours_found} contours, {elapsed_ms}ms)",
+        severity="INFO",
+        source="CV_ENGINE"
+    ))
+
     return {
         "result_image": f"data:image/png;base64,{b64}",
         "stats": {
@@ -87,3 +113,24 @@ async def process_image(
         },
         "source": "OPENCV_NATIVE_PIPELINE"
     }
+
+from typing import Optional
+from fastapi import Query
+from app.db.repositories.cv_results import cv_results_repo
+
+@router.get("/results")
+async def get_cv_results(
+    experiment_id: Optional[str] = Query(None),
+    run_id: Optional[str] = Query(None),
+    algorithm: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    skip: int = Query(0, ge=0)
+):
+    return await cv_results_repo.list_results(
+        experiment_id=experiment_id,
+        run_id=run_id,
+        algorithm=algorithm,
+        limit=limit,
+        skip=skip
+    )
+

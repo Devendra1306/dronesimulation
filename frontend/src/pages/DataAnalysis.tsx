@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
 import Panel from '../components/common/Panel';
-import { analyzeData } from '../services/api';
+import { analyzeData, getTelemetryHistory } from '../services/api';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { FileSpreadsheet, Download, RefreshCw, BarChart2, Table, TrendingUp, Grid } from 'lucide-react';
+import { FileSpreadsheet, Download, RefreshCw, BarChart2, Table, TrendingUp, Grid, Database } from 'lucide-react';
 
 interface AnalysisStats {
   mean: number;
@@ -69,6 +69,30 @@ export default function DataAnalysis() {
     handleFileUpload(file);
   };
 
+  const loadFromMongoDB = async () => {
+    setIsLoading(true);
+    try {
+      const res = await getTelemetryHistory({ limit: 100 });
+      if (res.data && res.data.length > 0) {
+        // Build CSV representation from persisted MongoDB documents
+        const headers = ['timestamp_s,altitude_m,velocity_mps,battery_pct,heading_deg,pitch_deg'];
+        const rows = res.data.map(d => 
+          `${d.timestamp},${d.altitude},${d.velocity},${d.battery},${d.heading},${d.pitch}`
+        );
+        const csvContent = [headers, ...rows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const file = new File([blob], 'mongodb_telemetry_dump.csv', { type: 'text/csv' });
+        await handleFileUpload(file);
+      } else {
+        alert('No historical telemetry found in MongoDB yet. Run the simulation to persist flight data.');
+      }
+    } catch (err) {
+      console.error('Failed to query MongoDB telemetry:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const downloadProcessedSummary = () => {
     if (!analysis) return;
     const jsonStr = JSON.stringify(analysis, null, 2);
@@ -104,16 +128,24 @@ export default function DataAnalysis() {
       <div className="flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <h2 className="text-base font-bold text-text-primary">Flight Telemetry Data Analysis</h2>
-          <span className="badge-demo">PANDAS & NUMPY PIPELINE</span>
+          <span className="badge-demo">PANDAS & MONGODB PIPELINE</span>
           <span className="text-xs text-text-muted">Real Time-Series Curves • Statistical Auditing</span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={loadFromMongoDB}
+            disabled={isLoading}
+            className="btn-secondary text-xs flex items-center gap-1.5 py-1.5 px-3 border-accent/40 text-accent hover:border-accent"
+          >
+            <Database className="w-3.5 h-3.5" />
+            Query MongoDB Telemetry
+          </button>
           <button
             onClick={loadSampleFlightLog}
             className="btn-secondary text-xs flex items-center gap-1.5 py-1.5 px-3"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            Load Sample Flight Log CSV
+            Load Sample CSV
           </button>
           {analysis && (
             <button
