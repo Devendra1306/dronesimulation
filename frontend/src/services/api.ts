@@ -5,7 +5,9 @@ import {
   SimulationRun, HistoricalTelemetry 
 } from '../types';
 
-const api = axios.create({ baseURL: 'http://localhost:8000', timeout: 10000 });
+import { API_BASE_URL } from '../config/env';
+
+const api = axios.create({ baseURL: API_BASE_URL, timeout: 10000 });
 
 export const getSystemStatus = () => api.get<SystemStatus>('/api/system/status');
 export const getTelemetry = () => api.get<TelemetryData>('/api/drone/telemetry');

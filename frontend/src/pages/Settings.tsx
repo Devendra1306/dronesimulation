@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import Panel from '../components/common/Panel';
 import { Sliders, Cpu, Network, Database, Shield, Save, Check } from 'lucide-react';
+import { API_BASE_URL, WS_BASE_URL } from '../config/env';
 
 export default function Settings() {
   const [savedNotice, setSavedNotice] = useState(false);
   const [config, setConfig] = useState({
     simMode: 'demo',
-    apiUrl: 'http://localhost:8000',
-    wsUrl: 'ws://localhost:8000',
+    apiUrl: API_BASE_URL,
+    wsUrl: WS_BASE_URL,
     rosBridgeUrl: 'ws://localhost:9090',
     gazeboUrl: 'http://localhost:8081',
     telemetryRateHz: 10,

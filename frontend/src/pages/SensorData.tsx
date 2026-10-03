@@ -3,6 +3,7 @@ import TelemetryChart from '../components/charts/TelemetryChart';
 import { useWebSocket } from '../hooks/useWebSocket';
 import type { TelemetryData } from '../types';
 import { getTelemetry } from '../services/api';
+import { WS_TELEMETRY_URL } from '../config/env';
 import { Activity, Navigation, Battery, Radio, Camera, Cpu } from 'lucide-react';
 
 interface SensorCardProps {
@@ -45,7 +46,7 @@ export default function SensorData() {
     setHistory(prev => [...prev, data].slice(-120));
   }, []);
 
-  useWebSocket({ url: 'ws://localhost:8000/ws/telemetry', onMessage });
+  useWebSocket({ url: WS_TELEMETRY_URL, onMessage });
 
   const latest = history[history.length - 1];
 

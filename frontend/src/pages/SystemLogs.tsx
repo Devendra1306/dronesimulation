@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAppStore } from '../store/appStore.tsx';
 import { getLogs } from '../services/api';
+import { WS_LOGS_URL } from '../config/env';
 import type { LogEntry } from '../types';
 import { Search, Trash2, ChevronDown } from 'lucide-react';
 
@@ -68,7 +69,7 @@ export default function SystemLogs() {
   }, [dispatch]);
 
   const { connected } = useWebSocket({
-    url: 'ws://localhost:8000/ws/logs',
+    url: WS_LOGS_URL,
     onMessage,
   });
 

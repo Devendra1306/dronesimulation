@@ -6,6 +6,7 @@ import TelemetryChart from '../components/charts/TelemetryChart';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAppStore } from '../store/appStore.tsx';
 import { getTelemetry } from '../services/api';
+import { WS_TELEMETRY_URL } from '../config/env';
 import type { TelemetryData } from '../types';
 
 export default function MissionControl() {
@@ -26,7 +27,7 @@ export default function MissionControl() {
   }, [dispatch]);
 
   const { connected } = useWebSocket({
-    url: 'ws://localhost:8000/ws/telemetry',
+    url: WS_TELEMETRY_URL,
     onMessage,
   });
 
