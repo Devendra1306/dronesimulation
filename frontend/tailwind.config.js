@@ -4,67 +4,76 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Base surfaces
+        // Workspace and card surfaces (Light/Dark hybrid system)
+        workspace: '#F7F9FC',
+        card: '#FFFFFF',
         surface: {
-          0: '#080a0e',   // deepest background
-          1: '#0d1117',   // main background  
-          2: '#111620',   // panel background
-          3: '#161d2a',   // elevated panel
-          4: '#1c2537',   // card/widget
-          5: '#232e42',   // hover state
+          0: '#FFFFFF',
+          1: '#F7F9FC',   // Main light workspace
+          2: '#FFFFFF',   // Card / panel surface
+          3: '#F1F5F9',   // Light muted container / elevated input
+          4: '#E2E8F0',   // Border / divider
+          5: '#CBD5E1',   // Hover state on light
+        },
+        // Dedicated dark containers for Sidebar & Top Nav
+        darknav: {
+          sidebar: '#0F172A',
+          header: '#111827',
+          surface: '#1E293B',
+          border: '#1E293B',
         },
         // Borders
         border: {
-          subtle: '#1e2a3a',
-          DEFAULT: '#253347',
-          strong: '#2d3f57',
+          subtle: '#F1F5F9',
+          DEFAULT: '#E2E8F0',
+          strong: '#CBD5E1',
         },
-        // Text
+        // Text hierarchy on light workspace
         text: {
-          primary: '#e8edf5',
-          secondary: '#8fa3bd',
-          muted: '#4d6380',
-          disabled: '#2d3f57',
+          primary: '#0F172A',   // Slate 900
+          secondary: '#475569', // Slate 600
+          muted: '#94A3B8',     // Slate 400
+          disabled: '#CBD5E1',
         },
-        // Accent - electric blue
+        // Brand & Accents
         accent: {
-          DEFAULT: '#1a9fd4',
-          light: '#2ab8f0',
-          dark: '#127faa',
-          glow: 'rgba(26, 159, 212, 0.15)',
+          DEFAULT: '#0EA5E9',   // Sky blue (Primary)
+          light: '#38BDF8',
+          dark: '#0284C7',
+          glow: 'rgba(14, 165, 233, 0.15)',
+        },
+        secondary: {
+          DEFAULT: '#2563EB',   // Royal blue
+          light: '#3B82F6',
+          dark: '#1D4ED8',
         },
         // Status colors
         status: {
-          green: '#22c55e',
-          'green-dim': 'rgba(34, 197, 94, 0.12)',
-          amber: '#f59e0b',
-          'amber-dim': 'rgba(245, 158, 11, 0.12)',
-          red: '#ef4444',
-          'red-dim': 'rgba(239, 68, 68, 0.12)',
-          blue: '#3b82f6',
-          'blue-dim': 'rgba(59, 130, 246, 0.12)',
+          green: '#16A34A',
+          'green-dim': 'rgba(22, 163, 74, 0.10)',
+          amber: '#F59E0B',
+          'amber-dim': 'rgba(245, 158, 11, 0.10)',
+          red: '#EF4444',
+          'red-dim': 'rgba(239, 68, 68, 0.10)',
+          blue: '#2563EB',
+          'blue-dim': 'rgba(37, 99, 235, 0.10)',
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
-      fontSize: {
-        '2xs': ['0.625rem', { lineHeight: '1rem' }],
-        xs: ['0.6875rem', { lineHeight: '1rem', letterSpacing: '0.08em' }],
-        sm: ['0.75rem', { lineHeight: '1.25rem' }],
-        base: ['0.875rem', { lineHeight: '1.5rem' }],
-        md: ['1rem', { lineHeight: '1.5rem' }],
-        lg: ['1.125rem', { lineHeight: '1.75rem' }],
-        xl: ['1.375rem', { lineHeight: '2rem' }],
-        '2xl': ['1.75rem', { lineHeight: '2.25rem', letterSpacing: '-0.02em' }],
+      boxShadow: {
+        card: '0 4px 20px rgba(15, 23, 42, 0.05)',
+        'card-hover': '0 10px 25px rgba(15, 23, 42, 0.08)',
+        subtle: '0 1px 3px rgba(15, 23, 42, 0.04)',
       },
       borderRadius: {
-        sm: '4px',
-        DEFAULT: '6px',
-        md: '8px',
-        lg: '10px',
-        xl: '12px',
+        sm: '6px',
+        DEFAULT: '8px',
+        md: '10px',
+        lg: '12px',
+        xl: '14px',
         '2xl': '16px',
       },
       animation: {

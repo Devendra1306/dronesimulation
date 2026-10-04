@@ -1,7 +1,6 @@
 """Gazebo Simulation Adapter for RoboEdge AI Lab.
 
-Interfaces with the Gazebo Physics Engine (Gazebo Classic 11 or Gazebo Sim Garden/Harmonic)
-via the ROS-Gazebo bridge (ros_gz_bridge) or rosbridge_suite (ws://localhost:9090).
+Interfaces with Gazebo (Gazebo Classic 11 / ODE Physics) via rosbridge_suite (ws://localhost:9090).
 
 Architecture:
   React UI (GCS)
@@ -13,7 +12,7 @@ Architecture:
   rosbridge_server
        │ ROS2 DDS Bus
        ▼
-  Gazebo World & UAV Quadrotor Model
+  Gazebo World & 3D Quadrotor Model with libgazebo_ros_quadrotor_controller.so
 """
 
 import asyncio
@@ -43,6 +42,7 @@ class GazeboSimulationAdapter(SimulationAdapter):
         self._ws = None
         self._listener_task: Optional[asyncio.Task] = None
         self._reconnect_task: Optional[asyncio.Task] = None
+        self._flight_loop_task: Optional[asyncio.Task] = None
         self._should_run = True
 
         # Drone Model configuration
@@ -62,22 +62,30 @@ class GazeboSimulationAdapter(SimulationAdapter):
         self.pitch = 0.0
         self.roll = 0.0
         self.yaw = 0.0
-        self.lat = 0.0
-        self.lon = 0.0
-        self.battery = 0.0
+        self.lat = 16.5062
+        self.lon = 80.6480
+        self.battery = 100.0
         self.battery_available = False
         self.signal_strength = 0.0
         self.sim_time = 0.0
         self.start_time = time.time()
         self.last_msg_time = 0.0
+        self.has_valid_odometry = False
         self._camera_frame: Optional[bytes] = None
 
+        # Desired hover / target state for flight manager
+        self._target_altitude = 2.0
+        self._active_linear_vel = [0.0, 0.0, 0.0]
+        self._active_angular_vel = 0.0
+
     async def connect(self) -> bool:
-        """Start background connection to rosbridge."""
+        """Start background connection to rosbridge and flight manager."""
         self._should_run = True
         log_service.add_log("INFO", f"Initializing GazeboSimulationAdapter for target {self.bridge_url}", "GAZEBO_ADAPTER")
         if not self._reconnect_task or self._reconnect_task.done():
             self._reconnect_task = asyncio.create_task(self._maintain_connection())
+        if not self._flight_loop_task or self._flight_loop_task.done():
+            self._flight_loop_task = asyncio.create_task(self._flight_manager_loop())
         return True
 
     async def disconnect(self) -> None:
@@ -87,6 +95,8 @@ class GazeboSimulationAdapter(SimulationAdapter):
             self._reconnect_task.cancel()
         if self._listener_task and not self._listener_task.done():
             self._listener_task.cancel()
+        if self._flight_loop_task and not self._flight_loop_task.done():
+            self._flight_loop_task.cancel()
         if self._ws:
             try:
                 await self._ws.close()
@@ -94,6 +104,7 @@ class GazeboSimulationAdapter(SimulationAdapter):
                 pass
         self._bridge_connected = False
         self._physics_running = False
+        self.has_valid_odometry = False
         self.active_topics.clear()
         log_service.add_log("INFO", "GazeboSimulationAdapter disconnected", "GAZEBO_ADAPTER")
 
@@ -104,8 +115,12 @@ class GazeboSimulationAdapter(SimulationAdapter):
 
     @property
     def is_gazebo_active(self) -> bool:
-        """True ONLY if messages have actually been received from Gazebo in the last 3.5 seconds."""
-        return self._bridge_connected and (time.time() - self._gazebo_msg_recv_time < 3.5)
+        """True ONLY if real odometry messages have actually arrived from Gazebo within the last 3.5s."""
+        return (
+            self._bridge_connected
+            and self.has_valid_odometry
+            and (time.time() - self._gazebo_msg_recv_time < 3.5)
+        )
 
     @property
     def is_connected(self) -> bool:
@@ -116,7 +131,7 @@ class GazeboSimulationAdapter(SimulationAdapter):
         if self.is_gazebo_active:
             return "GAZEBO"
         elif self.is_bridge_connected:
-            return "GAZEBO_STANDBY (ROS2 Link Active, Waiting for Gazebo World)"
+            return "GAZEBO_STANDBY (rosbridge Online, Awaiting Gazebo Physics)"
         return "GAZEBO_DISCONNECTED"
 
     @property
@@ -153,9 +168,10 @@ class GazeboSimulationAdapter(SimulationAdapter):
                     break
                 except Exception as e:
                     self._bridge_connected = False
+                    self.has_valid_odometry = False
                     self.signal_strength = 0.0
-                    logger.debug(f"Gazebo rosbridge connection failed: {e}. Retrying in 5s...")
-                    await asyncio.sleep(5.0)
+                    logger.debug(f"Gazebo rosbridge connection failed: {e}. Retrying in 4s...")
+                    await asyncio.sleep(4.0)
             else:
                 await asyncio.sleep(2.0)
 
@@ -179,14 +195,13 @@ class GazeboSimulationAdapter(SimulationAdapter):
 
         # 2. Subscribe to Gazebo Model States, Odometry, IMU, GPS, and Camera
         topics_to_sub = [
-            ("/gazebo/model_states", "gazebo_msgs/msg/ModelStates"),
-            (f"/model/{self.drone_model_name}/odometry", "nav_msgs/msg/Odometry"),
             ("/odom", "nav_msgs/msg/Odometry"),
+            (f"/model/{self.drone_model_name}/odometry", "nav_msgs/msg/Odometry"),
+            ("/gazebo/model_states", "gazebo_msgs/msg/ModelStates"),
             ("/imu/data", "sensor_msgs/msg/Imu"),
             ("/gps/fix", "sensor_msgs/msg/NavSatFix"),
             ("/camera/image_raw", "sensor_msgs/msg/Image"),
             ("/drone/telemetry", "std_msgs/msg/String"),
-            ("/drone/state", "std_msgs/msg/String"),
             ("/battery_state", "sensor_msgs/msg/BatteryState")
         ]
         for top, t_type in topics_to_sub:
@@ -195,7 +210,7 @@ class GazeboSimulationAdapter(SimulationAdapter):
                 "topic": top,
                 "type": t_type
             }))
-        log_service.add_log("INFO", "Subscribed to Gazebo topics: /odom, /imu/data, /gps/fix, /cmd_vel", "GAZEBO_ADAPTER")
+        log_service.add_log("INFO", "Subscribed to Gazebo physics topics: /odom, /imu/data, /gps/fix, /cmd_vel", "GAZEBO_ADAPTER")
 
     async def _message_listener(self):
         """Listen and parse Gazebo world physics updates."""
@@ -211,14 +226,16 @@ class GazeboSimulationAdapter(SimulationAdapter):
                         self.active_topics.add(topic)
                         self.last_topic_recv[topic] = time.time()
 
-                    if topic == "/gazebo/model_states":
-                        self._handle_model_states(payload)
-                        self._gazebo_msg_recv_time = time.time()
-                        self._physics_running = True
-                    elif "/odometry" in str(topic) or topic == "/odom":
+                    if topic == "/odom" or "/odometry" in str(topic):
                         self._handle_odometry(payload)
                         self._gazebo_msg_recv_time = time.time()
                         self._physics_running = True
+                        self.has_valid_odometry = True
+                    elif topic == "/gazebo/model_states":
+                        self._handle_model_states(payload)
+                        self._gazebo_msg_recv_time = time.time()
+                        self._physics_running = True
+                        self.has_valid_odometry = True
                     elif topic == "/imu/data":
                         self._handle_imu(payload)
                     elif topic == "/gps/fix":
@@ -236,10 +253,34 @@ class GazeboSimulationAdapter(SimulationAdapter):
             log_service.add_log("WARN", f"rosbridge connection interrupted: {type(e).__name__}: {e}", "ROS2_BRIDGE")
             self._bridge_connected = False
             self._physics_running = False
+            self.has_valid_odometry = False
             self.signal_strength = 0.0
 
+    def _handle_odometry(self, payload: Dict[str, Any]):
+        """Parse nav_msgs/msg/Odometry from Gazebo controller plugin."""
+        try:
+            pose = payload.get("pose", {}).get("pose", {})
+            pos = pose.get("position", {})
+            q = pose.get("orientation", {})
+            twist = payload.get("twist", {}).get("twist", {}).get("linear", {})
+
+            z = float(pos.get("z", 0.0))
+            self.altitude = max(0.0, z)
+            
+            # TRUTHFUL FLIGHT DETECTION: airborne is strictly determined by physical altitude
+            self.is_airborne = bool(self.altitude > 0.25)
+
+            vx = float(twist.get("x", 0.0))
+            vy = float(twist.get("y", 0.0))
+            vz = float(twist.get("z", 0.0))
+            self.velocity = math.sqrt(vx * vx + vy * vy + vz * vz)
+
+            self._quaternion_to_euler(q)
+        except Exception:
+            pass
+
     def _handle_model_states(self, payload: Dict[str, Any]):
-        """Extract quadrotor pose and twist from Gazebo Classic ModelStates."""
+        """Extract quadrotor pose and twist from Gazebo Classic ModelStates as fallback."""
         try:
             names = payload.get("name", [])
             poses = payload.get("pose", [])
@@ -256,37 +297,14 @@ class GazeboSimulationAdapter(SimulationAdapter):
             q = poses[idx].get("orientation", {})
             t = twists[idx].get("linear", {})
 
-            # Altitude
-            self.altitude = max(0.0, float(p.get("z", 0.0)))
-            self.is_airborne = self.altitude > 0.15
+            z = float(p.get("z", 0.0))
+            self.altitude = max(0.0, z)
+            self.is_airborne = bool(self.altitude > 0.25)
 
-            # Velocity magnitude
             vx = float(t.get("x", 0.0))
             vy = float(t.get("y", 0.0))
             vz = float(t.get("z", 0.0))
-            self.velocity = math.sqrt(vx*vx + vy*vy + vz*vz)
-
-            # Quaternions to Euler angles
-            self._quaternion_to_euler(q)
-        except Exception:
-            pass
-
-    def _handle_odometry(self, payload: Dict[str, Any]):
-        """Parse nav_msgs/msg/Odometry from Gazebo / ros_gz_bridge."""
-        try:
-            pose = payload.get("pose", {}).get("pose", {})
-            pos = pose.get("position", {})
-            q = pose.get("orientation", {})
-            twist = payload.get("twist", {}).get("twist", {}).get("linear", {})
-
-            z = pos.get("z", 0.0)
-            self.altitude = max(0.0, float(z))
-            self.is_airborne = self.altitude > 0.15
-
-            vx = float(twist.get("x", 0.0))
-            vy = float(twist.get("y", 0.0))
-            vz = float(twist.get("z", 0.0))
-            self.velocity = math.sqrt(vx*vx + vy*vy + vz*vz)
+            self.velocity = math.sqrt(vx * vx + vy * vy + vz * vz)
 
             self._quaternion_to_euler(q)
         except Exception:
@@ -334,8 +352,6 @@ class GazeboSimulationAdapter(SimulationAdapter):
     def _handle_telemetry(self, payload: Any):
         try:
             data = json.loads(payload) if isinstance(payload, str) else payload
-            if "mode" in data: self.mode = str(data["mode"]).upper()
-            if "is_armed" in data: self.is_armed = bool(data["is_armed"])
             if "battery" in data: 
                 self.battery = float(data["battery"])
                 self.battery_available = True
@@ -360,12 +376,46 @@ class GazeboSimulationAdapter(SimulationAdapter):
         self.yaw = math.degrees(math.atan2(siny_cosp, cosy_cosp))
         self.heading = (self.yaw + 360) % 360
 
+    async def _flight_manager_loop(self):
+        """Background control loop to manage altitude transitions (TAKEOFF hold, LAND touchdown)."""
+        while self._should_run:
+            try:
+                if self.is_gazebo_active and self.is_armed:
+                    # Automatic takeoff climb to target hover altitude
+                    if self.mode == "TAKING_OFF":
+                        if self.altitude >= self._target_altitude:
+                            # Reached target altitude -> transition to hover
+                            self.mode = "HOVERING"
+                            self._active_linear_vel = [0.0, 0.0, 0.0]
+                            await self._publish_velocity(0.0, 0.0, 0.0, 0.0)
+                            log_service.add_log("INFO", f"Takeoff climb complete. Holding hover at {self.altitude:.2f}m", "FLIGHT_CONTROLLER")
+                        else:
+                            # Continue upward climb
+                            await self._publish_velocity(0.0, 0.0, 1.2, 0.0)
+
+                    # Controlled landing descent
+                    elif self.mode == "LANDING":
+                        if self.altitude <= 0.22:
+                            # Ground touchdown confirmed
+                            self.mode = "STANDBY"
+                            self.is_armed = False
+                            self._active_linear_vel = [0.0, 0.0, 0.0]
+                            await self._publish_velocity(0.0, 0.0, 0.0, 0.0)
+                            log_service.add_log("INFO", f"Touchdown confirmed at {self.altitude:.2f}m. Motors secured.", "FLIGHT_CONTROLLER")
+                        else:
+                            # Continue controlled descent
+                            await self._publish_velocity(0.0, 0.0, -0.8, 0.0)
+
+            except Exception as e:
+                logger.debug(f"Flight manager loop iteration error: {e}")
+
+            await asyncio.sleep(0.1)  # 10 Hz control loop
+
     async def start_simulation(self) -> bool:
-        """Unpause Gazebo physics (supports Gazebo Classic and Gazebo Sim)."""
+        """Unpause Gazebo physics."""
         self._physics_running = True
         log_service.add_log("INFO", "Unpausing Gazebo simulation physics", "GAZEBO")
         if self._ws and self._bridge_connected:
-            # Gazebo Classic service
             await self._ws.send(json.dumps({
                 "op": "call_service",
                 "service": "/gazebo/unpause_physics",
@@ -412,7 +462,6 @@ class GazeboSimulationAdapter(SimulationAdapter):
         if self.is_gazebo_active:
             source = "GAZEBO"
             sig = self.signal_strength
-            # If battery is not provided by Gazebo model plugin, mark 100% or 0%
             bat = round(self.battery, 1) if self.battery_available else 100.0
         elif self.is_bridge_connected:
             source = "GAZEBO_STANDBY"
@@ -443,35 +492,83 @@ class GazeboSimulationAdapter(SimulationAdapter):
         )
 
     async def send_drone_command(self, command: str, params: dict) -> bool:
-        """Send flight maneuvers to Gazebo quadrotor model via /cmd_vel."""
+        """Send flight maneuvers to Gazebo quadrotor model via /cmd_vel with physical confirmation."""
         cmd = command.upper()
-        log_service.add_log("INFO", f"Dispatched command {cmd} to Gazebo adapter", "FLIGHT_CONTROLLER")
+        log_service.add_log("INFO", f"Dispatched command {cmd} to Gazebo flight adapter", "FLIGHT_CONTROLLER")
 
         if cmd == "ARM":
             self.is_armed = True
             self.mode = "ARMED"
+            log_service.add_log("INFO", "Motors Armed. Flight Interlock Disengaged.", "FLIGHT_CONTROLLER")
+            return True
+
         elif cmd == "DISARM":
+            if self.is_airborne:
+                log_service.add_log("WARN", "Safety Interlock: Cannot disarm while airborne!", "FLIGHT_CONTROLLER")
+                return False
             self.is_armed = False
-            self.is_airborne = False
             self.mode = "STANDBY"
+            await self._publish_velocity(0.0, 0.0, 0.0, 0.0)
+            log_service.add_log("INFO", "Motors Disarmed. Flight Interlock Engaged.", "FLIGHT_CONTROLLER")
+            return True
+
         elif cmd == "TAKEOFF":
-            if self.is_armed:
-                self.mode = "TAKING_OFF"
-                self.is_airborne = True
-                return await self._publish_velocity(0.0, 0.0, 1.5, 0.0)
+            if not self.is_armed:
+                log_service.add_log("WARN", "Takeoff rejected: Drone is not armed!", "FLIGHT_CONTROLLER")
+                return False
+
+            self.mode = "TAKING_OFF"
+            self._target_altitude = 2.0
+            # Send vertical climb velocity
+            pub_ok = await self._publish_velocity(0.0, 0.0, 1.4, 0.0)
+            if not pub_ok:
+                self.mode = "ARMED"
+                return False
+
+            # Wait briefly to confirm physical lift-off response
+            init_alt = self.altitude
+            for _ in range(15):
+                await asyncio.sleep(0.1)
+                if self.altitude > init_alt + 0.08 or self.is_airborne:
+                    log_service.add_log("INFO", f"Takeoff confirmed: physical altitude climbing ({self.altitude:.2f}m)", "FLIGHT_CONTROLLER")
+                    return True
+
+            log_service.add_log("WARN", "Takeoff commanded: physical climb verification pending in Gazebo", "FLIGHT_CONTROLLER")
+            return True
+
         elif cmd == "LAND":
             self.mode = "LANDING"
-            return await self._publish_velocity(0.0, 0.0, -1.0, 0.0)
+            await self._publish_velocity(0.0, 0.0, -0.8, 0.0)
+            log_service.add_log("INFO", f"Controlled landing initiated from {self.altitude:.2f}m", "FLIGHT_CONTROLLER")
+            return True
+
         elif cmd == "HOVER":
             self.mode = "HOVERING"
-            return await self._publish_velocity(0.0, 0.0, 0.0, 0.0)
+            self._active_linear_vel = [0.0, 0.0, 0.0]
+            self._active_angular_vel = 0.0
+            await self._publish_velocity(0.0, 0.0, 0.0, 0.0)
+            log_service.add_log("INFO", "Hover / Position Hold engaged", "FLIGHT_CONTROLLER")
+            return True
+
         elif cmd == "STOP":
+            # Emergency motor kill
             self.mode = "IDLE"
-            return await self._publish_velocity(0.0, 0.0, 0.0, 0.0)
+            self.is_armed = False
+            self._active_linear_vel = [0.0, 0.0, 0.0]
+            self._active_angular_vel = 0.0
+            await self._publish_velocity(0.0, 0.0, 0.0, 0.0)
+            log_service.add_log("WARN", "EMERGENCY MOTOR CUT DISPATCHED", "FLIGHT_CONTROLLER")
+            return True
+
         elif cmd == "MOVE":
+            if not self.is_armed:
+                log_service.add_log("WARN", "Move rejected: Drone is not armed!", "FLIGHT_CONTROLLER")
+                return False
+
             direction = params.get("direction", "forward").lower()
             speed = float(params.get("speed", 1.0))
             lx, ly, lz, az = 0.0, 0.0, 0.0, 0.0
+
             if direction == "forward": lx = speed
             elif direction == "backward": lx = -speed
             elif direction == "left": ly = speed
@@ -480,11 +577,14 @@ class GazeboSimulationAdapter(SimulationAdapter):
             elif direction == "down": lz = -speed
             elif direction == "yaw_left": az = speed
             elif direction == "yaw_right": az = -speed
+
+            self.mode = "MOVING"
             return await self._publish_velocity(lx, ly, lz, az)
 
         return True
 
     async def _publish_velocity(self, lx: float, ly: float, lz: float, az: float) -> bool:
+        """Publish geometry_msgs/msg/Twist to /cmd_vel."""
         if self._ws and self._bridge_connected:
             try:
                 twist_msg = {
@@ -498,9 +598,9 @@ class GazeboSimulationAdapter(SimulationAdapter):
                 await self._ws.send(json.dumps(twist_msg))
                 return True
             except Exception as e:
-                log_service.add_log("ERROR", f"Failed to publish /cmd_vel: {e}", "GAZEBO_ADAPTER")
+                log_service.add_log("ERROR", f"Failed to publish /cmd_vel to rosbridge: {e}", "GAZEBO_ADAPTER")
                 return False
-        return True
+        return False
 
     async def get_simulation_status(self) -> SimulationStatus:
         if self.is_gazebo_active:

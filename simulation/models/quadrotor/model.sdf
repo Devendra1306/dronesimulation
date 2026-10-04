@@ -1,43 +1,433 @@
 <?xml version="1.0" ?>
 <sdf version="1.6">
   <model name="quadrotor">
-    <pose>0 0 0.2 0 0 0</pose>
+    <pose>0 0 0.15 0 0 0</pose>
     <static>false</static>
 
-    <!-- Main Chassis Link -->
+    <!-- Main Drone Link -->
     <link name="base_link">
       <inertial>
-        <mass>1.5</mass>
+        <mass>1.45</mass>
         <inertia>
-          <ixx>0.0347563</ixx>
+          <ixx>0.025</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0.0458929</iyy>
+          <iyy>0.025</iyy>
           <iyz>0</iyz>
-          <izz>0.0977</izz>
+          <izz>0.045</izz>
         </inertia>
       </inertial>
 
-      <collision name="chassis_collision">
+      <!-- Collision Hull: Center Body + Landing Skids -->
+      <collision name="body_collision">
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <box>
-            <size>0.45 0.45 0.15</size>
+            <size>0.24 0.24 0.08</size>
           </box>
         </geometry>
       </collision>
 
-      <visual name="chassis_visual">
+      <collision name="landing_gear_collision">
+        <pose>0 0 -0.08 0 0 0</pose>
         <geometry>
           <box>
-            <size>0.45 0.45 0.12</size>
+            <size>0.28 0.28 0.04</size>
+          </box>
+        </geometry>
+      </collision>
+
+      <!-- 1. Central Fuselage / Lower Chassis Plate -->
+      <visual name="chassis_plate_visual">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.18 0.18 0.02</size>
           </box>
         </geometry>
         <material>
-          <ambient>0.1 0.1 0.15 1</ambient>
-          <diffuse>0.15 0.2 0.25 1</diffuse>
+          <ambient>0.12 0.15 0.2 1</ambient>
+          <diffuse>0.18 0.22 0.28 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
         </material>
       </visual>
 
+      <!-- 2. Avionics Canopy / Top Shell -->
+      <visual name="canopy_visual">
+        <pose>0 0 0.03 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.14 0.11 0.04</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.08 0.5 0.7 1</ambient>
+          <diffuse>0.1 0.6 0.85 1</diffuse>
+          <specular>0.5 0.5 0.5 1</specular>
+        </material>
+      </visual>
+
+      <!-- 3. Battery Pack on Aft -->
+      <visual name="battery_visual">
+        <pose>-0.02 0 0.055 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.09 0.055 0.03</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.1 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- 4. Front Nose Beacon (Forward Orientation Indicator) -->
+      <visual name="nose_cone_visual">
+        <pose>0.10 0 0.02 0 1.5708 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.015</radius>
+            <length>0.03</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.9 0.1 0.1 1</ambient>
+          <diffuse>1.0 0.15 0.15 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- 5. GPS Antenna Mast and Puck -->
+      <visual name="gps_mast_visual">
+        <pose>-0.06 0 0.08 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.004</radius>
+            <length>0.06</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.2 0.2 0.2 1</ambient>
+          <diffuse>0.3 0.3 0.3 1</diffuse>
+        </material>
+      </visual>
+
+      <visual name="gps_puck_visual">
+        <pose>-0.06 0 0.11 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.022</radius>
+            <length>0.012</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.1 1</ambient>
+          <diffuse>0.8 0.8 0.8 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- 6. Four Carbon Fiber Booms (X Configuration) -->
+      <!-- Arm 1: Front-Right (+X, -Y) -->
+      <visual name="arm_fr_visual">
+        <pose>0.08 -0.08 0 0 1.5708 -0.7854</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.01</radius>
+            <length>0.24</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.12 1</ambient>
+          <diffuse>0.15 0.15 0.18 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Arm 2: Front-Left (+X, +Y) -->
+      <visual name="arm_fl_visual">
+        <pose>0.08 0.08 0 0 1.5708 0.7854</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.01</radius>
+            <length>0.24</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.12 1</ambient>
+          <diffuse>0.15 0.15 0.18 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Arm 3: Rear-Left (-X, +Y) -->
+      <visual name="arm_rl_visual">
+        <pose>-0.08 0.08 0 0 1.5708 2.3562</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.01</radius>
+            <length>0.24</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.12 1</ambient>
+          <diffuse>0.15 0.15 0.18 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Arm 4: Rear-Right (-X, -Y) -->
+      <visual name="arm_rr_visual">
+        <pose>-0.08 -0.08 0 0 1.5708 -2.3562</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.01</radius>
+            <length>0.24</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.12 1</ambient>
+          <diffuse>0.15 0.15 0.18 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- 7. Four Brushless Motor Pods -->
+      <!-- Motor 1 (FR) -->
+      <visual name="motor_fr_visual">
+        <pose>0.17 -0.17 0.018 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.02</radius>
+            <length>0.032</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.2 0.25 0.3 1</ambient>
+          <diffuse>0.3 0.35 0.45 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Motor 2 (FL) -->
+      <visual name="motor_fl_visual">
+        <pose>0.17 0.17 0.018 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.02</radius>
+            <length>0.032</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.2 0.25 0.3 1</ambient>
+          <diffuse>0.3 0.35 0.45 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Motor 3 (RL) -->
+      <visual name="motor_rl_visual">
+        <pose>-0.17 0.17 0.018 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.02</radius>
+            <length>0.032</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.2 0.25 0.3 1</ambient>
+          <diffuse>0.3 0.35 0.45 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Motor 4 (RR) -->
+      <visual name="motor_rr_visual">
+        <pose>-0.17 -0.17 0.018 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.02</radius>
+            <length>0.032</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.2 0.25 0.3 1</ambient>
+          <diffuse>0.3 0.35 0.45 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- 8. Four Rotor / Propeller Discs -->
+      <!-- Propeller 1 (FR - Orange/Cyan front) -->
+      <visual name="prop_fr_visual">
+        <pose>0.17 -0.17 0.038 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.11</radius>
+            <length>0.005</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.1 0.7 0.9 0.7</ambient>
+          <diffuse>0.15 0.8 1.0 0.8</diffuse>
+        </material>
+      </visual>
+
+      <!-- Propeller 2 (FL - Orange/Cyan front) -->
+      <visual name="prop_fl_visual">
+        <pose>0.17 0.17 0.038 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.11</radius>
+            <length>0.005</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.1 0.7 0.9 0.7</ambient>
+          <diffuse>0.15 0.8 1.0 0.8</diffuse>
+        </material>
+      </visual>
+
+      <!-- Propeller 3 (RL - Dark Aft) -->
+      <visual name="prop_rl_visual">
+        <pose>-0.17 0.17 0.038 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.11</radius>
+            <length>0.005</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.2 0.2 0.2 0.7</ambient>
+          <diffuse>0.3 0.3 0.3 0.8</diffuse>
+        </material>
+      </visual>
+
+      <!-- Propeller 4 (RR - Dark Aft) -->
+      <visual name="prop_rr_visual">
+        <pose>-0.17 -0.17 0.038 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.11</radius>
+            <length>0.005</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.2 0.2 0.2 0.7</ambient>
+          <diffuse>0.3 0.3 0.3 0.8</diffuse>
+        </material>
+      </visual>
+
+      <!-- 9. Landing Gear Legs & Skids -->
+      <!-- Left Skid Leg 1 -->
+      <visual name="leg_fl_visual">
+        <pose>0.08 0.10 -0.05 0.3 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.006</radius>
+            <length>0.10</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.1 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Left Skid Leg 2 -->
+      <visual name="leg_rl_visual">
+        <pose>-0.08 0.10 -0.05 0.3 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.006</radius>
+            <length>0.10</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.1 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Left Horizontal Skid Tube -->
+      <visual name="skid_left_visual">
+        <pose>0 0.12 -0.09 1.5708 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.008</radius>
+            <length>0.26</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.15 0.15 0.15 1</ambient>
+          <diffuse>0.25 0.25 0.25 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Right Skid Leg 1 -->
+      <visual name="leg_fr_visual">
+        <pose>0.08 -0.10 -0.05 -0.3 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.006</radius>
+            <length>0.10</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.1 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Right Skid Leg 2 -->
+      <visual name="leg_rr_visual">
+        <pose>-0.08 -0.10 -0.05 -0.3 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.006</radius>
+            <length>0.10</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.1 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Right Horizontal Skid Tube -->
+      <visual name="skid_right_visual">
+        <pose>0 -0.12 -0.09 1.5708 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.008</radius>
+            <length>0.26</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.15 0.15 0.15 1</ambient>
+          <diffuse>0.25 0.25 0.25 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- 10. Front Camera Gimbal Pod Housing -->
+      <visual name="camera_pod_visual">
+        <pose>0.11 0 -0.02 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.024</radius>
+          </sphere>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.15 1</ambient>
+          <diffuse>0.15 0.15 0.2 1</diffuse>
+        </material>
+      </visual>
+
+      <visual name="camera_lens_visual">
+        <pose>0.132 0 -0.02 0 1.5708 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.012</radius>
+            <length>0.008</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.1 0.8 1.0 1</ambient>
+          <diffuse>0.2 0.9 1.0 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- ================= SENSORS ================= -->
       <!-- 1. IMU Sensor -->
       <sensor name="imu_sensor" type="imu">
         <always_on>true</always_on>
@@ -54,7 +444,7 @@
       </sensor>
 
       <!-- 2. NavSat / GPS Sensor -->
-      <sensor name="gps_sensor" type="navsat">
+      <sensor name="gps_sensor" type="gps">
         <always_on>true</always_on>
         <update_rate>10</update_rate>
         <topic>/gps/fix</topic>
@@ -68,6 +458,7 @@
 
       <!-- 3. FPV Camera Sensor -->
       <sensor name="fpv_camera" type="camera">
+        <pose>0.135 0 -0.02 0 0 0</pose>
         <camera>
           <horizontal_fov>1.3962634</horizontal_fov>
           <image>
@@ -93,20 +484,14 @@
       </sensor>
     </link>
 
-    <!-- 4. Gazebo Classic Planar / Multicopter Flight Controller Plugin -->
-    <!-- Maps /cmd_vel (Twist) to drone displacement and publishes /odom -->
-    <plugin name="object_controller" filename="libgazebo_ros_planar_move.so">
+    <!-- ================= 3D QUADROTOR FLIGHT CONTROLLER PLUGIN ================= -->
+    <!-- Replaced planar_move with custom 3D flight controller supporting X, Y, Z, Yaw -->
+    <plugin name="quadrotor_flight_controller" filename="/mnt/k/Drone/simulation/lib/libgazebo_ros_quadrotor_controller.so">
       <ros>
         <namespace>/</namespace>
         <remapping>cmd_vel:=/cmd_vel</remapping>
         <remapping>odom:=/odom</remapping>
       </ros>
-      <update_rate>100</update_rate>
-      <publish_rate>50</publish_rate>
-      <publish_odom>true</publish_odom>
-      <publish_odom_tf>true</publish_odom_tf>
-      <odometry_frame>odom</odometry_frame>
-      <robot_base_frame>base_link</robot_base_frame>
     </plugin>
   </model>
 </sdf>

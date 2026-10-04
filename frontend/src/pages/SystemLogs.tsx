@@ -10,22 +10,22 @@ const LEVELS = ['ALL', 'INFO', 'WARN', 'ERROR', 'DEBUG'] as const;
 type Level = typeof LEVELS[number];
 
 const levelStyle: Record<string, string> = {
-  INFO:  'text-text-secondary',
-  WARN:  'text-status-amber',
-  ERROR: 'text-status-red',
-  DEBUG: 'text-status-blue',
+  INFO:  'text-slate-700',
+  WARN:  'text-amber-700',
+  ERROR: 'text-rose-700 font-semibold',
+  DEBUG: 'text-sky-700',
 };
 
 const levelBadge: Record<string, string> = {
-  INFO:  'bg-surface-5 text-text-muted',
-  WARN:  'bg-status-amber-dim text-status-amber',
-  ERROR: 'bg-status-red-dim text-status-red',
-  DEBUG: 'bg-status-blue-dim text-status-blue',
+  INFO:  'bg-slate-100 text-slate-600 border border-slate-200',
+  WARN:  'bg-amber-50 text-amber-700 border border-amber-200',
+  ERROR: 'bg-rose-50 text-rose-700 border border-rose-200',
+  DEBUG: 'bg-sky-50 text-sky-700 border border-sky-200',
 };
 
 function LogLine({ log }: { log: LogEntry }) {
-  const style = levelStyle[log.level] ?? 'text-text-secondary';
-  const badge = levelBadge[log.level] ?? 'bg-surface-5 text-text-muted';
+  const style = levelStyle[log.level] ?? 'text-slate-700';
+  const badge = levelBadge[log.level] ?? 'bg-slate-100 text-slate-600';
 
   const time = (() => {
     try {
@@ -36,13 +36,13 @@ function LogLine({ log }: { log: LogEntry }) {
   })();
 
   return (
-    <div className={`flex items-start gap-3 py-1 px-3 hover:bg-surface-3 group text-xs font-mono`}>
-      <span className="text-text-muted shrink-0 w-20">{time}</span>
-      <span className={`shrink-0 w-14 px-1.5 py-0.5 rounded text-center text-2xs font-bold tracking-wide ${badge}`}>
+    <div className={`flex items-start gap-3 py-1.5 px-4 hover:bg-slate-50 group text-xs font-mono border-b border-slate-100/60 transition-colors`}>
+      <span className="text-slate-400 shrink-0 w-20 text-[11px]">{time}</span>
+      <span className={`shrink-0 w-14 px-1.5 py-0.5 rounded text-center text-[10px] font-bold tracking-wide ${badge}`}>
         {log.level}
       </span>
-      <span className={`flex-1 ${style}`}>{log.message}</span>
-      <span className="shrink-0 text-text-muted text-2xs opacity-0 group-hover:opacity-100 transition-opacity">
+      <span className={`flex-1 ${style} leading-relaxed`}>{log.message}</span>
+      <span className="shrink-0 text-slate-400 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity font-sans">
         {log.source}
       </span>
     </div>
@@ -88,55 +88,57 @@ export default function SystemLogs() {
 
   const clearLogs = () => {
     // Reset logs in store
-    filtered.forEach(() => {}); // no-op — in real app dispatch CLEAR_LOGS
+    filtered.forEach(() => {});
   };
 
   return (
-    <div className="flex flex-col gap-3 h-full min-h-0">
+    <div className="flex flex-col gap-4 h-full min-h-0 select-none">
       {/* Header */}
-      <div className="flex items-center justify-between shrink-0">
+      <div className="bg-white border border-slate-200/90 rounded-2xl px-5 py-3.5 flex items-center justify-between shrink-0 shadow-card">
         <div className="flex items-center gap-3">
-          <h2 className="text-base font-bold text-text-primary font-mono tracking-tight">Avionics & Simulation Engineering Logs</h2>
-          <div className="flex items-center gap-1.5">
-            <div className={`status-dot ${connected ? 'bg-status-green' : 'bg-surface-5'}`} />
-            <span className="text-xs text-text-muted font-mono">
+          <h2 className="text-sm font-semibold text-slate-900 tracking-tight font-sans">
+            Avionics & Simulation System Logs
+          </h2>
+          <div className="flex items-center gap-1.5 font-mono text-xs">
+            <span className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 shadow-[0_0_6px_#10b981]' : 'bg-slate-400'}`} />
+            <span className="text-[11px] text-slate-500">
               {connected ? 'LIVE STREAM' : 'OFFLINE'}
             </span>
           </div>
-          <span className="text-xs text-text-muted">{filtered.length} entries</span>
+          <span className="text-xs text-slate-400 font-mono">({filtered.length} entries)</span>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-1.5 cursor-pointer">
+
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-500 font-medium">
             <input
               type="checkbox"
               checked={autoScroll}
               onChange={e => setAutoScroll(e.target.checked)}
-              className="w-3 h-3 accent-accent"
+              className="w-3.5 h-3.5 rounded text-sky-600 focus:ring-sky-500"
             />
-            <span className="text-xs text-text-muted">Auto-scroll</span>
+            <span>Auto-scroll</span>
           </label>
           <button
-            className="btn-secondary flex items-center gap-1.5 text-xs py-1.5 px-3"
+            className="btn-secondary flex items-center gap-1.5 text-xs py-1.5 px-3 text-slate-600 hover:text-slate-900"
             onClick={clearLogs}
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-3.5 h-3.5 text-slate-400" />
             Clear
           </button>
         </div>
       </div>
 
-      {/* Toolbar */}
+      {/* Filter and Search Toolbar */}
       <div className="flex items-center gap-3 shrink-0">
-        {/* Level filter */}
-        <div className="flex gap-1">
+        <div className="flex gap-1 bg-white p-1 rounded-xl border border-slate-200/90 shadow-subtle">
           {LEVELS.map(l => (
             <button
               key={l}
               onClick={() => setFilter(l)}
-              className={`text-xs px-2.5 py-1 rounded font-medium transition-colors ${
+              className={`text-xs px-3 py-1 rounded-lg font-medium transition-all ${
                 filter === l
-                  ? 'bg-accent text-white'
-                  : 'bg-surface-3 text-text-muted hover:text-text-primary'
+                  ? 'bg-sky-500 text-white font-semibold shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               {l}
@@ -144,36 +146,34 @@ export default function SystemLogs() {
           ))}
         </div>
 
-        {/* Search */}
-        <div className="relative flex-1 max-w-xs">
-          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+        <div className="relative flex-1 max-w-sm">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search messages…"
-            className="w-full bg-surface-3 border border-border-subtle rounded pl-8 pr-3 py-1 text-xs text-text-primary placeholder-text-muted outline-none focus:border-accent"
+            placeholder="Search log messages..."
+            className="w-full bg-white border border-slate-200/90 rounded-xl pl-9 pr-3.5 py-1.5 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-sky-500 shadow-subtle"
           />
         </div>
       </div>
 
-      {/* Log viewer */}
-      <div className="flex-1 min-h-0 panel overflow-hidden flex flex-col">
-        <div className="panel-header shrink-0 bg-surface-1 rounded-t-xl">
-          <div className="flex gap-4 text-2xs font-mono text-text-muted">
-            <span className="w-20">TIME</span>
-            <span className="w-14">LEVEL</span>
-            <span className="flex-1">MESSAGE</span>
-            <span>SOURCE</span>
-          </div>
+      {/* Log Console Card */}
+      <div className="flex-1 min-h-0 bg-white border border-slate-200/90 rounded-2xl shadow-card overflow-hidden flex flex-col">
+        <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 shrink-0 font-mono text-[10px] text-slate-400 flex gap-4 uppercase font-semibold">
+          <span className="w-20">Time</span>
+          <span className="w-14 text-center">Level</span>
+          <span className="flex-1">Message</span>
+          <span>Source</span>
         </div>
-        <div className="flex-1 overflow-y-auto bg-surface-1 py-1">
+        <div className="flex-1 overflow-y-auto py-1">
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-32 gap-2">
-              <div className="w-8 h-8 rounded-full bg-surface-3 flex items-center justify-center">
-                <ChevronDown className="w-4 h-4 text-text-muted" />
+            <div className="flex flex-col items-center justify-center h-44 gap-2 text-center p-6">
+              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                <ChevronDown className="w-5 h-5 text-slate-400" />
               </div>
-              <span className="text-xs text-text-muted">No log entries yet. Logs will appear here as events occur.</span>
+              <span className="text-xs text-slate-500 font-medium">No log entries matched your filter</span>
+              <p className="text-[11px] text-slate-400">New system and simulation events will stream here live</p>
             </div>
           ) : (
             filtered.map((log, i) => <LogLine key={`${log.id ?? i}`} log={log} />)

@@ -9,11 +9,14 @@ interface StatusPipProps {
   label: string;
   title?: string;
 }
+
 function StatusPip({ connected, label, title }: StatusPipProps) {
   return (
     <div className="flex items-center gap-1.5" title={title || `${label}: ${connected ? 'CONNECTED' : 'DISCONNECTED'}`}>
-      <div className={`status-dot ${connected ? 'bg-status-green ring-2 ring-status-green/20' : 'bg-surface-5 border border-text-muted/30'}`} />
-      <span className={`text-[11px] font-mono tracking-wider ${connected ? 'text-text-primary' : 'text-text-muted'}`}>{label}</span>
+      <span className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 shadow-[0_0_6px_#10b981]' : 'bg-slate-600'}`} />
+      <span className={`text-[11px] font-mono tracking-wider ${connected ? 'text-slate-200 font-medium' : 'text-slate-400'}`}>
+        {label}
+      </span>
     </div>
   );
 }
@@ -53,70 +56,85 @@ export default function Header() {
   const gazeboConnected = status?.gazebo_connected ?? false;
 
   const modeBadge = isDemo ? (
-    <span className="badge-demo text-[10px] font-mono">DEMO SIMULATION</span>
+    <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+      DEMO SIMULATION
+    </span>
   ) : gazeboConnected ? (
-    <span className="badge-active text-[10px] font-mono">GAZEBO ACTIVE</span>
+    <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">
+      GAZEBO ACTIVE
+    </span>
   ) : ros2Connected ? (
-    <span className="badge-active text-[10px] font-mono">ROS2 ACTIVE</span>
+    <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30">
+      ROS2 ACTIVE
+    </span>
   ) : (
-    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-4 text-text-muted border border-border">ROS2 STANDBY</span>
+    <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+      ROS2 STANDBY
+    </span>
   );
 
   return (
-    <header className="h-12 bg-surface-2 border-b border-border-subtle flex items-center justify-between px-5 shrink-0 select-none">
+    <header className="h-14 bg-[#111827] border-b border-slate-800/90 flex items-center justify-between px-6 shrink-0 select-none">
       {/* Left: App Identity + Simulation Mode */}
-      <div className="flex items-center gap-3">
-        <span className="text-text-secondary text-xs uppercase tracking-widest font-mono font-semibold">
+      <div className="flex items-center gap-4">
+        <span className="text-white text-xs font-semibold tracking-wider font-mono">
           ROBOEDGE UAS LAB
         </span>
-        <div className="h-4 w-px bg-border-subtle" />
-        <span className="text-[11px] font-mono text-text-muted">MODE:</span>
-        {modeBadge}
+        <div className="h-4 w-px bg-slate-700/60" />
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-slate-400 font-medium">MODE</span>
+          {modeBadge}
+        </div>
       </div>
 
-      {/* Center/Right: GCS Subsystem Status (MODE | ROS2 | GAZEBO | TELEMETRY | DATABASE) */}
+      {/* Center/Right: Subsystem Status (TELEMETRY | ROS2 | GAZEBO | DATABASE) */}
       <div className="flex items-center gap-5">
-        <div className="flex items-center gap-4 bg-surface-1/60 px-3 py-1 rounded-md border border-border-subtle">
+        <div className="flex items-center gap-4 bg-slate-900/80 px-3.5 py-1.5 rounded-lg border border-slate-800">
           <StatusPip
             connected={wsConnected}
             label="TELEMETRY"
             title={wsConnected ? "FastAPI WebSocket Stream: ACTIVE" : "FastAPI WebSocket Stream: OFFLINE"}
           />
-          <div className="h-3 w-px bg-border-subtle" />
+          <div className="h-3 w-px bg-slate-700/50" />
           <StatusPip
             connected={ros2Connected}
             label="ROS2"
-            title={ros2Connected ? "ROS2 Link: CONNECTED (ws://localhost:9090)" : "ROS2 Link: DISCONNECTED (Waiting for rosbridge_server)"}
+            title={ros2Connected ? "ROS2 Link: CONNECTED" : "ROS2 Link: DISCONNECTED"}
           />
-          <div className="h-3 w-px bg-border-subtle" />
+          <div className="h-3 w-px bg-slate-700/50" />
           <StatusPip
             connected={gazeboConnected}
             label="GAZEBO"
-            title={gazeboConnected ? "Gazebo Physics Stream: ACTIVE" : "Gazebo Physics Stream: DISCONNECTED (Start Gazebo simulation world)"}
+            title={gazeboConnected ? "Gazebo Physics Stream: ACTIVE" : "Gazebo Physics Stream: DISCONNECTED"}
           />
-          <div className="h-3 w-px bg-border-subtle" />
+          <div className="h-3 w-px bg-slate-700/50" />
           <div className="flex items-center gap-1.5" title={dbStatus?.message || (dbConnected ? "MongoDB Atlas Connected" : "MongoDB Offline")}>
-            <div className={`status-dot ${dbConnected ? 'bg-status-green ring-2 ring-status-green/20' : 'bg-surface-5'}`} />
-            <span className={`text-[11px] font-mono tracking-wider ${dbConnected ? 'text-text-primary' : 'text-text-muted'}`}>
+            <span className={`w-2 h-2 rounded-full ${dbConnected ? 'bg-emerald-500 shadow-[0_0_6px_#10b981]' : 'bg-slate-600'}`} />
+            <span className={`text-[11px] font-mono tracking-wider ${dbConnected ? 'text-slate-200 font-medium' : 'text-slate-400'}`}>
               DATABASE
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs">
+        {/* Latency / Ping indicator */}
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800/40 border border-slate-700/40 text-xs">
           {wsConnected ? (
-            <Wifi className="w-3.5 h-3.5 text-status-green" />
+            <Wifi className="w-3.5 h-3.5 text-emerald-400" />
           ) : (
-            <WifiOff className="w-3.5 h-3.5 text-status-red" />
+            <WifiOff className="w-3.5 h-3.5 text-rose-400" />
           )}
-          <span className="font-mono text-text-secondary text-[11px]">
+          <span className="font-mono text-slate-300 text-[11px]">
             {latency !== null ? `${latency}ms` : 'OFFLINE'}
           </span>
         </div>
 
-        <div className="h-4 w-px bg-border-subtle" />
+        <div className="h-4 w-px bg-slate-700/60" />
 
-        <Link to="/settings" className="text-text-muted hover:text-text-primary transition-colors">
+        <Link
+          to="/settings"
+          className="text-slate-400 hover:text-white transition-colors p-1 rounded-md hover:bg-slate-800"
+          title="Platform Settings"
+        >
           <Settings className="w-4 h-4" />
         </Link>
       </div>

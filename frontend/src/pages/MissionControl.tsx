@@ -44,54 +44,54 @@ export default function MissionControl() {
 
   return (
     <div className="flex flex-col gap-4 h-full min-h-0 select-none pb-2">
-      {/* Top Aerospace Mission Header Strip */}
-      <div className="bg-surface-2 border border-border-subtle rounded-xl px-4 py-2.5 flex items-center justify-between shrink-0 shadow-sm">
-        {/* Left: Stream Health & Source */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
+      {/* 4. Elegant White/Light Telemetry Status Panel */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl px-5 py-3 flex items-center justify-between shrink-0 shadow-card">
+        {/* Left: Stream Health & Origin */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2.5">
             <span
               className={`w-2.5 h-2.5 rounded-full ${
                 connected
-                  ? 'bg-status-green shadow-[0_0_8px_#22c55e]'
-                  : 'bg-status-red shadow-[0_0_8px_#ef4444] animate-pulse'
+                  ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]'
+                  : 'bg-rose-500 shadow-[0_0_8px_#ef4444] animate-pulse'
               }`}
             />
-            <span className="font-mono text-xs font-bold text-text-primary uppercase tracking-wider">
-              {connected ? 'AVIONICS STREAM LIVE' : 'CONNECTING TELEMETRY…'}
+            <span className="font-semibold text-xs text-slate-800 tracking-wide font-mono">
+              {connected ? 'AVIONICS STREAM ACTIVE' : 'CONNECTING TELEMETRY…'}
             </span>
           </div>
 
-          <span className="text-border-DEFAULT">|</span>
+          <div className="h-4 w-px bg-slate-200" />
 
-          <div className="flex items-center gap-1.5 font-mono text-2xs text-text-muted">
-            <Radio className="w-3 h-3 text-accent" />
-            <span>ORIGIN:</span>
-            <span className="text-text-primary font-semibold">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <Radio className="w-3.5 h-3.5 text-sky-600" />
+            <span className="text-slate-400 font-sans">Origin:</span>
+            <span className="text-slate-700 font-medium font-mono">
               {telem?.source || 'SIMULATION ODE'}
             </span>
           </div>
         </div>
 
-        {/* Center: Mission Clock & Flight Status */}
-        <div className="hidden md:flex items-center gap-4 font-mono text-xs">
-          <div className="flex items-center gap-1.5 bg-surface-3 px-2.5 py-1 rounded-lg border border-border-subtle">
-            <Clock className="w-3.5 h-3.5 text-accent" />
-            <span className="text-text-muted text-2xs">MISSION TIME:</span>
-            <span className="text-text-primary font-bold">
+        {/* Center: Mission Clock & Interlock Status */}
+        <div className="hidden md:flex items-center gap-5 text-xs font-mono">
+          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/70">
+            <Clock className="w-3.5 h-3.5 text-sky-600" />
+            <span className="text-slate-400 font-sans text-[11px]">Mission Time:</span>
+            <span className="text-slate-800 font-bold">
               {telem?.simulation_time ? `${telem.simulation_time.toFixed(1)}s` : '0.0s'}
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-surface-3 px-2.5 py-1 rounded-lg border border-border-subtle">
+          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/70">
             {telem?.is_armed ? (
-              <ShieldCheck className="w-3.5 h-3.5 text-status-green" />
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
             ) : (
-              <ShieldAlert className="w-3.5 h-3.5 text-status-amber" />
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
             )}
-            <span className="text-text-muted text-2xs">INTERLOCK:</span>
+            <span className="text-slate-400 font-sans text-[11px]">Interlock:</span>
             <span
               className={`font-bold ${
-                telem?.is_armed ? 'text-status-green' : 'text-status-amber'
+                telem?.is_armed ? 'text-emerald-600' : 'text-slate-600'
               }`}
             >
               {telem?.is_armed ? 'ARMED' : 'DISARMED'}
@@ -100,51 +100,51 @@ export default function MissionControl() {
         </div>
 
         {/* Right: Operations Deck Tab Switcher */}
-        <div className="flex items-center gap-1 bg-surface-3 p-1 rounded-lg border border-border-subtle font-mono text-xs">
+        <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/70 text-xs font-medium">
           <button
             onClick={() => setDeckTab('split')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
               deckTab === 'split'
-                ? 'bg-accent text-white font-bold shadow-xs'
-                : 'text-text-muted hover:text-text-primary'
+                ? 'bg-white text-slate-900 font-semibold shadow-subtle border border-slate-200/60'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
             title="Side-by-side Flight Controls & Avionics"
           >
-            <Columns className="w-3.5 h-3.5" />
+            <Columns className="w-3.5 h-3.5 text-sky-600" />
             <span className="hidden sm:inline">DUAL DECK</span>
           </button>
 
           <button
             onClick={() => setDeckTab('controls')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
               deckTab === 'controls'
-                ? 'bg-accent text-white font-bold shadow-xs'
-                : 'text-text-muted hover:text-text-primary'
+                ? 'bg-white text-slate-900 font-semibold shadow-subtle border border-slate-200/60'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
             title="Focus on Flight Controls"
           >
-            <Sliders className="w-3.5 h-3.5" />
+            <Sliders className="w-3.5 h-3.5 text-sky-600" />
             <span className="hidden sm:inline">CONTROLS</span>
           </button>
 
           <button
             onClick={() => setDeckTab('telemetry')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
               deckTab === 'telemetry'
-                ? 'bg-accent text-white font-bold shadow-xs'
-                : 'text-text-muted hover:text-text-primary'
+                ? 'bg-white text-slate-900 font-semibold shadow-subtle border border-slate-200/60'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
             title="Focus on Telemetry Sensors"
           >
-            <Activity className="w-3.5 h-3.5" />
+            <Activity className="w-3.5 h-3.5 text-sky-600" />
             <span className="hidden sm:inline">TELEMETRY</span>
           </button>
         </div>
       </div>
 
-      {/* Main Mission Operations Grid */}
+      {/* Main Operations Grid */}
       <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-[460px]">
-        {/* Left Stage: Primary Flight Display & Spatial HUD (Full flex width) */}
+        {/* Left: Primary Flight Display (Central Drone View) */}
         <div className="flex-1 min-w-0 min-h-[380px] h-full flex flex-col">
           <DroneVisualizer
             heading={telem?.heading}
@@ -160,11 +160,11 @@ export default function MissionControl() {
           />
         </div>
 
-        {/* Right Stage: Mission Operations Deck */}
+        {/* Right: Operations Deck */}
         <div className="shrink-0 flex gap-4 h-full">
           {/* Flight Controls Panel */}
           {(deckTab === 'split' || deckTab === 'controls') && (
-            <div className="w-[285px] sm:w-[305px] panel p-3.5 flex flex-col h-full overflow-y-auto">
+            <div className="w-[285px] sm:w-[305px] bg-white border border-slate-200/90 rounded-2xl shadow-card p-4 flex flex-col h-full overflow-y-auto">
               <DroneControls
                 isArmed={telem?.is_armed}
                 isAirborne={telem?.is_airborne}
@@ -176,20 +176,20 @@ export default function MissionControl() {
 
           {/* Telemetry Sensor Panel */}
           {(deckTab === 'split' || deckTab === 'telemetry') && (
-            <div className="w-[285px] sm:w-[315px] panel p-3.5 flex flex-col h-full overflow-y-auto">
+            <div className="w-[285px] sm:w-[315px] bg-white border border-slate-200/90 rounded-2xl shadow-card p-4 flex flex-col h-full overflow-y-auto">
               <TelemetryPanel data={telem ?? null} />
             </div>
           )}
         </div>
       </div>
 
-      {/* Bottom Stage: Synchronous Sensor Telemetry Sparklines */}
+      {/* Bottom Stage: Synchronous Sensor Telemetry Analytics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-48 shrink-0">
         <div className="min-w-0 h-full">
           <TelemetryChart
             data={chartData}
             dataKey="altitude"
-            color="#0ea5e9"
+            color="#0EA5E9"
             name="ALTITUDE PROFILE"
             unit="m"
           />
@@ -198,7 +198,7 @@ export default function MissionControl() {
           <TelemetryChart
             data={chartData}
             dataKey="velocity"
-            color="#22c55e"
+            color="#16A34A"
             name="GROUND VELOCITY"
             unit="m/s"
           />
@@ -207,7 +207,7 @@ export default function MissionControl() {
           <TelemetryChart
             data={chartData}
             dataKey="battery"
-            color="#f59e0b"
+            color="#F59E0B"
             name="BATTERY LEVEL"
             unit="%"
           />

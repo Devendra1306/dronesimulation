@@ -6,15 +6,13 @@ import { API_BASE_URL, WS_BASE_URL } from '../config/env';
 export default function Settings() {
   const [savedNotice, setSavedNotice] = useState(false);
   const [config, setConfig] = useState({
-    simMode: 'demo',
+    simMode: 'gazebo',
     apiUrl: API_BASE_URL,
     wsUrl: WS_BASE_URL,
-    rosBridgeUrl: 'ws://localhost:9090',
-    gazeboUrl: 'http://localhost:8081',
+    rosBridgeUrl: 'ws://127.0.0.1:9090',
     telemetryRateHz: 10,
     cvModelPath: 'models/yolo.pt',
     edgeTargetDevice: 'jetson_xavier',
-    dbUrl: 'sqlite:///./roboedge.db',
   });
 
   const handleSave = (e: React.FormEvent) => {
@@ -29,12 +27,12 @@ export default function Settings() {
       <div className="flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <h2 className="text-base font-bold text-text-primary">System & Adapter Configuration</h2>
-          <span className="badge-demo">ENV-DRIVEN ARCHITECTURE</span>
+          <span className="badge-active">REAL HARDWARE & SIMULATION LINK</span>
         </div>
         {savedNotice && (
           <span className="text-xs text-status-green flex items-center gap-1.5 font-mono animate-fade-in">
             <Check className="w-3.5 h-3.5" />
-            Parameters staged in session memory!
+            Parameters saved in session memory!
           </span>
         )}
       </div>
@@ -51,18 +49,18 @@ export default function Settings() {
                   onChange={(e) => setConfig({ ...config, simMode: e.target.value })}
                   className="w-full bg-surface-3 border border-border-subtle rounded-lg p-2.5 text-text-primary focus:border-accent outline-none"
                 >
-                  <option value="demo">DemoSimulationAdapter (Native simulated physics & telemetry)</option>
+                  <option value="gazebo">GazeboSimulationAdapter (Authentic 3D Quadrotor ODE in WSL2)</option>
                   <option value="ros2">ROS2Adapter (rosbridge WebSocket link to ROS2 Humble nodes)</option>
-                  <option value="gazebo">GazeboSimulationAdapter (Direct Gazebo 11 / Fortress SITL instance)</option>
+                  <option value="demo">DemoSimulationAdapter (Fallback synthetic physics & telemetry)</option>
                 </select>
                 <p className="text-3xs text-text-muted mt-1.5 leading-relaxed">
-                  Notice: Setting mode to ROS2 or Gazebo requires running rosbridge or Gazebo gzserver as defined in docs/GazeboIntegration.md.
+                  Active Mode: GazeboSimulationAdapter connects to rosbridge (<code className="text-accent">ws://127.0.0.1:9090</code>) which drives the Gazebo 3D ODE physics simulator and realistic quadrotor model.
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <div>
-                  <label className="text-text-muted block mb-1 font-medium">ROS2 rosbridge Suite Endpoint</label>
+                  <label className="text-text-muted block mb-1 font-medium">ROS 2 rosbridge WebSocket Gateway</label>
                   <input
                     type="text"
                     value={config.rosBridgeUrl}
@@ -71,12 +69,12 @@ export default function Settings() {
                   />
                 </div>
                 <div>
-                  <label className="text-text-muted block mb-1 font-medium">Gazebo SITL REST API</label>
+                  <label className="text-text-muted block mb-1 font-medium">Gazebo Simulation Engine</label>
                   <input
                     type="text"
-                    value={config.gazeboUrl}
-                    onChange={(e) => setConfig({ ...config, gazeboUrl: e.target.value })}
-                    className="w-full bg-surface-3 border border-border-subtle rounded p-2 text-text-primary font-mono focus:border-accent outline-none"
+                    disabled
+                    value="Gazebo Classic 11 / ODE Physics (Local WSL2)"
+                    className="w-full bg-surface-1 border border-border-subtle rounded p-2 text-status-green font-mono text-2xs cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -125,15 +123,6 @@ export default function Settings() {
                   className="w-full bg-surface-1 border border-border-subtle rounded p-2 text-status-green font-mono text-2xs cursor-not-allowed"
                 />
               </div>
-              <div>
-                <label className="text-text-muted block mb-1 font-medium">Telemetry DB Throttled Persistence Rate</label>
-                <input
-                  type="text"
-                  disabled
-                  value="1 Hz (Configurable via TELEMETRY_DB_RATE_HZ)"
-                  className="w-full bg-surface-1 border border-border-subtle rounded p-2 text-text-primary font-mono text-2xs cursor-not-allowed"
-                />
-              </div>
             </div>
           </Panel>
 
@@ -141,7 +130,7 @@ export default function Settings() {
           <Panel title="COMPUTER VISION & EDGE HARDWARE ACCELERATION">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-text-muted block mb-1 font-medium">Target Neural Weight Weights (.pt / .onnx)</label>
+                <label className="text-text-muted block mb-1 font-medium">Target Neural Weights (.pt / .onnx)</label>
                 <input
                   type="text"
                   value={config.cvModelPath}
@@ -162,6 +151,16 @@ export default function Settings() {
                   <option value="cuda_laptop">Discrete Laptop GPU (CUDA 12.x)</option>
                 </select>
               </div>
+            </div>
+          </Panel>
+
+          {/* Architecture Summary */}
+          <Panel title="SYSTEM TOPOLOGY">
+            <div className="bg-surface-1 p-3 rounded-lg border border-border-subtle font-mono text-2xs text-text-secondary leading-relaxed space-y-1">
+              <div>Vercel React Dashboard &rarr; Cloudflare Tunnel &rarr; Local FastAPI (:8000)</div>
+              <div>FastAPI GazeboSimulationAdapter &rarr; rosbridge (:9090) &rarr; ROS 2 Humble</div>
+              <div>ROS 2 (/cmd_vel) &rarr; Gazebo 3D ODE Flight Controller &rarr; 3D Quadrotor</div>
+              <div>3D Quadrotor Physics &rarr; /odom, /imu/data, /gps/fix, /camera/image_raw &rarr; Live Telemetry</div>
             </div>
           </Panel>
 

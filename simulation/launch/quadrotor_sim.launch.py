@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ROS 2 Launch file for RoboEdge Quadrotor Simulation with Gazebo & rosbridge."""
+"""ROS 2 Launch file for RoboEdge Real 3D Quadrotor Simulation with Gazebo & rosbridge."""
 
 import os
 from launch import LaunchDescription
@@ -8,10 +8,16 @@ from launch.actions import ExecuteProcess
 def generate_launch_description():
     pkg_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     world_file = os.path.join(pkg_dir, 'worlds', 'quadrotor_test.world')
+    plugin_dir = os.path.join(pkg_dir, 'lib')
 
-    # 1. Start Gazebo gzserver and gzclient with the world containing embedded quadrotor
+    env = dict(os.environ)
+    curr_plugin_path = env.get('GAZEBO_PLUGIN_PATH', '')
+    env['GAZEBO_PLUGIN_PATH'] = f"{plugin_dir}:{curr_plugin_path}"
+
+    # 1. Start Gazebo with the 3D Quadrotor World & ROS 2 plugins
     gazebo_cmd = ExecuteProcess(
         cmd=['gazebo', '--verbose', world_file, '-s', 'libgazebo_ros_init.so', '-s', 'libgazebo_ros_factory.so'],
+        additional_env=env,
         output='screen'
     )
 

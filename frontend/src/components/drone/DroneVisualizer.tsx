@@ -26,22 +26,22 @@ export default function DroneVisualizer({
   const scale = Math.max(0.75, Math.min(1.25, 1 + altitude / 60));
   const cx = 200;
   const cy = 200;
-  const armLen = 78;
+  const armLen = 76;
 
-  const modeColors: Record<string, string> = {
-    IDLE: '#64748b',
-    ARMED: '#f59e0b',
-    TAKING_OFF: '#06b6d4',
-    HOVERING: '#22c55e',
-    MOVING: '#3b82f6',
-    LANDING: '#f97316',
+  const modeBadgeStyles: Record<string, string> = {
+    IDLE: 'bg-slate-100 text-slate-700 border-slate-200',
+    ARMED: 'bg-amber-50 text-amber-700 border-amber-200',
+    TAKING_OFF: 'bg-sky-50 text-sky-700 border-sky-200',
+    HOVERING: 'bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold',
+    MOVING: 'bg-blue-50 text-blue-700 border-blue-200',
+    LANDING: 'bg-orange-50 text-orange-700 border-orange-200',
   };
 
-  const statusColor = modeColors[mode] ?? '#64748b';
+  const modeStyle = modeBadgeStyles[mode] ?? 'bg-slate-100 text-slate-700 border-slate-200';
   const isGazebo = source.includes('GAZEBO');
   const isDemo = source.includes('DEMO');
 
-  // Rotor animation class based on flight state
+  // Propeller spin animations
   const rotorClassCW = !isArmed
     ? ''
     : isAirborne
@@ -54,152 +54,159 @@ export default function DroneVisualizer({
     ? 'animate-spin-ccw'
     : 'animate-spin-idle';
 
-  // Pitch offset clamped for HUD ladder
-  const pitchOffset = Math.max(-60, Math.min(60, pitch * 2.2));
+  // Pitch ladder vertical displacement
+  const pitchOffset = Math.max(-50, Math.min(50, pitch * 2.0));
 
   return (
-    <div className="relative w-full h-full bg-[#070a10] rounded-xl border border-border-subtle overflow-hidden flex flex-col select-none">
-      {/* Top HUD Status Ticker */}
-      <div className="flex items-center justify-between px-4 py-2 bg-surface-2/90 border-b border-border-subtle shrink-0 backdrop-blur-sm z-10">
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1.5">
-            <span className={`w-2 h-2 rounded-full ${isArmed ? 'bg-status-green shadow-[0_0_8px_#22c55e]' : 'bg-status-red'}`} />
-            <span className="font-mono text-xs font-bold text-text-primary uppercase tracking-wider">
+    <div className="relative w-full h-full bg-white rounded-2xl border border-slate-200/90 shadow-card overflow-hidden flex flex-col select-none">
+      {/* Header Bar */}
+      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-white shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isArmed ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-rose-500'
+              }`}
+            />
+            <span className="text-xs font-semibold text-slate-800 tracking-wide font-mono">
               {isArmed ? 'ARMED' : 'DISARMED'}
             </span>
           </div>
-          <span className="text-border-DEFAULT">|</span>
-          <span
-            className="font-mono text-xs font-bold tracking-wider px-2 py-0.5 rounded"
-            style={{ color: statusColor, backgroundColor: `${statusColor}18` }}
-          >
+
+          <div className="h-3.5 w-px bg-slate-200" />
+
+          <span className={`text-[11px] font-mono px-2.5 py-0.5 rounded-full border ${modeStyle}`}>
             {mode}
           </span>
-          <span className="text-border-DEFAULT">|</span>
-          <span className="text-2xs font-mono text-text-muted">
+
+          <div className="h-3.5 w-px bg-slate-200" />
+
+          <span className="text-[11px] font-mono text-slate-500">
             {isGazebo ? (
-              <span className="text-status-green font-semibold">GAZEBO 3D ODE</span>
+              <span className="text-emerald-600 font-medium">GAZEBO 3D ODE</span>
             ) : isDemo ? (
-              <span className="text-amber-400">DEMO SIM</span>
+              <span className="text-amber-600 font-medium">DEMO SIMULATION</span>
             ) : (
-              <span className="text-accent font-semibold">{source || 'ROS 2'}</span>
+              <span className="text-sky-600 font-medium">{source || 'ROS 2'}</span>
             )}
           </span>
         </div>
 
+        {/* Top-Right Quick Values */}
         <div className="flex items-center gap-4 text-xs font-mono">
           <div className="flex items-center gap-1.5">
-            <span className="text-text-muted text-2xs uppercase">SPD</span>
-            <span className="text-text-primary font-bold">{velocity.toFixed(1)} <span className="text-text-muted font-normal text-2xs">m/s</span></span>
+            <span className="text-slate-400 text-[11px]">SPD</span>
+            <span className="font-semibold text-slate-800">
+              {velocity.toFixed(1)} <span className="text-slate-400 text-[10px] font-normal">m/s</span>
+            </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-text-muted text-2xs uppercase">ALT</span>
-            <span className="text-accent font-bold">{altitude.toFixed(1)} <span className="text-text-muted font-normal text-2xs">m</span></span>
+            <span className="text-slate-400 text-[11px]">ALT</span>
+            <span className="font-semibold text-sky-600">
+              {altitude.toFixed(1)} <span className="text-slate-400 text-[10px] font-normal">m</span>
+            </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-text-muted text-2xs uppercase">HDG</span>
-            <span className="text-status-amber font-bold">{heading.toFixed(0).padStart(3, '0')}°</span>
+            <span className="text-slate-400 text-[11px]">HDG</span>
+            <span className="font-semibold text-slate-800">
+              {heading.toFixed(0).padStart(3, '0')}°
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Main Vector Display Stage */}
-      <div className="flex-1 relative overflow-hidden flex items-center justify-center min-h-[300px]">
-        {/* Subtle aerospace background grid */}
-        <div 
-          className="absolute inset-0 opacity-[0.07] pointer-events-none"
+      {/* Main Vector Display Stage (Clean white canvas with subtle grid) */}
+      <div className="flex-1 relative overflow-hidden flex items-center justify-center min-h-[300px] bg-slate-50/50">
+        {/* Subtle engineering grid */}
+        <div
+          className="absolute inset-0 opacity-[0.4] pointer-events-none"
           style={{
-            backgroundImage: `radial-gradient(circle at 50% 50%, rgba(26, 159, 212, 0.4) 0%, transparent 60%),
-                              linear-gradient(#253347 1px, transparent 1px),
-                              linear-gradient(90deg, #253347 1px, transparent 1px)`,
-            backgroundSize: '100% 100%, 32px 32px, 32px 32px'
+            backgroundImage: `linear-gradient(#E2E8F0 1px, transparent 1px), linear-gradient(90deg, #E2E8F0 1px, transparent 1px)`,
+            backgroundSize: '24px 24px',
           }}
         />
 
-        {/* Speed Tape (Left) */}
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 w-12 bg-surface-2/70 border border-border-subtle/80 rounded-lg p-1.5 flex flex-col items-center z-10 backdrop-blur-xs">
-          <span className="text-[9px] font-mono font-bold text-text-muted tracking-widest uppercase mb-1">SPD</span>
-          <div className="flex flex-col items-center gap-1 py-1 w-full border-y border-border-subtle/40 font-mono text-[10px] text-text-muted">
+        {/* Speed Tape (Left Floating Card) */}
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 w-14 bg-white/95 border border-slate-200/90 rounded-xl p-2 flex flex-col items-center z-10 shadow-subtle backdrop-blur-xs">
+          <span className="text-[10px] font-sans font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            SPD
+          </span>
+          <div className="flex flex-col items-center gap-1 py-1 w-full border-y border-slate-100 font-mono text-[10px] text-slate-400">
             <span>{(velocity + 2).toFixed(1)}</span>
-            <span className="text-accent font-bold text-xs bg-accent/15 px-1 py-0.5 rounded w-full text-center">
+            <span className="text-sky-600 font-bold text-xs bg-sky-50 px-1.5 py-0.5 rounded-md w-full text-center border border-sky-100">
               {velocity.toFixed(1)}
             </span>
             <span>{Math.max(0, velocity - 2).toFixed(1)}</span>
           </div>
-          <span className="text-[8px] font-mono text-text-muted mt-1">M/S</span>
+          <span className="text-[9px] font-mono text-slate-400 mt-1">M/S</span>
         </div>
 
-        {/* Altitude Tape (Right) */}
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 w-12 bg-surface-2/70 border border-border-subtle/80 rounded-lg p-1.5 flex flex-col items-center z-10 backdrop-blur-xs">
-          <span className="text-[9px] font-mono font-bold text-text-muted tracking-widest uppercase mb-1">ALT</span>
-          <div className="flex flex-col items-center gap-1 py-1 w-full border-y border-border-subtle/40 font-mono text-[10px] text-text-muted">
+        {/* Altitude Tape (Right Floating Card) */}
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 w-14 bg-white/95 border border-slate-200/90 rounded-xl p-2 flex flex-col items-center z-10 shadow-subtle backdrop-blur-xs">
+          <span className="text-[10px] font-sans font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            ALT
+          </span>
+          <div className="flex flex-col items-center gap-1 py-1 w-full border-y border-slate-100 font-mono text-[10px] text-slate-400">
             <span>{(altitude + 1).toFixed(1)}</span>
-            <span className="text-accent font-bold text-xs bg-accent/15 px-1 py-0.5 rounded w-full text-center">
+            <span className="text-sky-600 font-bold text-xs bg-sky-50 px-1.5 py-0.5 rounded-md w-full text-center border border-sky-100">
               {altitude.toFixed(1)}
             </span>
             <span>{Math.max(0, altitude - 1).toFixed(1)}</span>
           </div>
-          <span className="text-[8px] font-mono text-text-muted mt-1">AGL (M)</span>
+          <span className="text-[9px] font-mono text-slate-400 mt-1">AGL (M)</span>
         </div>
 
         {/* Central HUD & Artificial Horizon / Attitude Layer */}
-        <svg 
-          className="w-full h-full max-w-[420px] max-h-[420px]" 
-          viewBox="0 0 400 400" 
+        <svg
+          className="w-full h-full max-w-[420px] max-h-[420px]"
+          viewBox="0 0 400 400"
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
-            {/* Propeller blade pattern */}
-            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="2" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
+            {/* Subtle cyan illumination under the drone */}
+            <radialGradient id="drone-glow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.18" />
+              <stop offset="60%" stopColor="#0EA5E9" stopOpacity="0.06" />
+              <stop offset="100%" stopColor="#0EA5E9" stopOpacity="0" />
+            </radialGradient>
           </defs>
 
           {/* Artificial Horizon & Pitch Ladder (Tilts with Roll, Shifts with Pitch) */}
           <g transform={`translate(${cx}, ${cy}) rotate(${-roll})`}>
-            {/* Pitch displacement container */}
             <g transform={`translate(0, ${pitchOffset})`}>
               {/* Horizon Line */}
-              <line x1="-110" y1="0" x2="-35" y2="0" stroke="#0ea5e9" strokeWidth="1.5" strokeOpacity="0.7" />
-              <line x1="35" y1="0" x2="110" y2="0" stroke="#0ea5e9" strokeWidth="1.5" strokeOpacity="0.7" />
+              <line x1="-100" y1="0" x2="-35" y2="0" stroke="#0EA5E9" strokeWidth="1.2" strokeOpacity="0.75" />
+              <line x1="35" y1="0" x2="100" y2="0" stroke="#0EA5E9" strokeWidth="1.2" strokeOpacity="0.75" />
 
-              {/* Pitch Ladder Marks (+10°, +5°, -5°, -10°) */}
-              {/* +10 deg pitch up */}
-              <g transform="translate(0, -25)">
-                <line x1="-30" y1="0" x2="30" y2="0" stroke="#0ea5e9" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="6 4" />
-                <line x1="-30" y1="0" x2="-30" y2="4" stroke="#0ea5e9" strokeWidth="1" strokeOpacity="0.4" />
-                <line x1="30" y1="0" x2="30" y2="4" stroke="#0ea5e9" strokeWidth="1" strokeOpacity="0.4" />
-                <text x="34" y="3" fontSize="8" fill="#0ea5e9" fillOpacity="0.5" fontFamily="monospace">+10</text>
+              {/* Pitch Ladder Marks (+10°, -10°) */}
+              <g transform="translate(0, -24)">
+                <line x1="-24" y1="0" x2="24" y2="0" stroke="#0EA5E9" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="4 3" />
+                <line x1="-24" y1="0" x2="-24" y2="3" stroke="#0EA5E9" strokeWidth="1" strokeOpacity="0.4" />
+                <line x1="24" y1="0" x2="24" y2="3" stroke="#0EA5E9" strokeWidth="1" strokeOpacity="0.4" />
+                <text x="28" y="3" fontSize="8" fill="#0EA5E9" fillOpacity="0.6" fontFamily="monospace">+10</text>
               </g>
 
-              {/* -10 deg pitch down */}
-              <g transform="translate(0, 25)">
-                <line x1="-30" y1="0" x2="30" y2="0" stroke="#f59e0b" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="6 4" />
-                <line x1="-30" y1="0" x2="-30" y2="-4" stroke="#f59e0b" strokeWidth="1" strokeOpacity="0.4" />
-                <line x1="30" y1="0" x2="30" y2="-4" stroke="#f59e0b" strokeWidth="1" strokeOpacity="0.4" />
-                <text x="34" y="3" fontSize="8" fill="#f59e0b" fillOpacity="0.5" fontFamily="monospace">-10</text>
+              <g transform="translate(0, 24)">
+                <line x1="-24" y1="0" x2="24" y2="0" stroke="#F59E0B" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="4 3" />
+                <line x1="-24" y1="0" x2="-24" y2="-3" stroke="#F59E0B" strokeWidth="1" strokeOpacity="0.4" />
+                <line x1="24" y1="0" x2="24" y2="-3" stroke="#F59E0B" strokeWidth="1" strokeOpacity="0.4" />
+                <text x="28" y="3" fontSize="8" fill="#F59E0B" fillOpacity="0.6" fontFamily="monospace">-10</text>
               </g>
             </g>
           </g>
 
-          {/* Aircraft Fixed Center Reticle / Boresight */}
+          {/* Center Boresight Reticle */}
           <g transform={`translate(${cx}, ${cy})`}>
-            {/* Center dot */}
-            <circle cx="0" cy="0" r="2.5" fill="#f59e0b" />
-            {/* Left winglet */}
-            <line x1="-22" y1="0" x2="-8" y2="0" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
-            <line x1="-22" y1="0" x2="-22" y2="6" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
-            {/* Right winglet */}
-            <line x1="8" y1="0" x2="22" y2="0" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
-            <line x1="22" y1="0" x2="22" y2="6" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="0" cy="0" r="2.5" fill="#F59E0B" />
+            <line x1="-18" y1="0" x2="-6" y2="0" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round" />
+            <line x1="6" y1="0" x2="18" y2="0" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round" />
           </g>
 
-          {/* Compass Outer Rings */}
-          <circle cx={cx} cy={cy} r="162" fill="none" stroke="#1e293b" strokeWidth="1" />
-          <circle cx={cx} cy={cy} r="145" fill="none" stroke="#1e293b" strokeWidth="0.75" strokeDasharray="3 3" opacity="0.6" />
+          {/* Thin Radar / Compass Rings */}
+          <circle cx={cx} cy={cy} r="162" fill="none" stroke="#E2E8F0" strokeWidth="1" />
+          <circle cx={cx} cy={cy} r="145" fill="none" stroke="#E2E8F0" strokeWidth="0.8" strokeDasharray="3 3" />
 
-          {/* Compass Rose Degree Ticks (Every 30 degrees) */}
+          {/* Compass Cardinal Marks */}
           {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg) => {
             const rad = ((deg - 90) * Math.PI) / 180;
             const r1 = 158;
@@ -214,17 +221,24 @@ export default function DroneVisualizer({
 
             return (
               <g key={deg}>
-                <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={isCardinal ? '#38bdf8' : '#334155'} strokeWidth={isCardinal ? '2' : '1'} />
+                <line
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke={isCardinal ? '#0EA5E9' : '#CBD5E1'}
+                  strokeWidth={isCardinal ? '1.5' : '0.8'}
+                />
                 {isCardinal && (
                   <text
-                    x={cx + 174 * Math.cos(rad)}
-                    y={cy + 174 * Math.sin(rad)}
+                    x={cx + 175 * Math.cos(rad)}
+                    y={cy + 175 * Math.sin(rad)}
                     textAnchor="middle"
                     dominantBaseline="middle"
                     fontSize="11"
-                    fontFamily="monospace"
-                    fontWeight="700"
-                    fill={deg === 0 ? '#ef4444' : '#94a3b8'}
+                    fontFamily="Inter, sans-serif"
+                    fontWeight="600"
+                    fill={deg === 0 ? '#EF4444' : '#64748B'}
                   >
                     {cardinalLabels[deg]}
                   </text>
@@ -233,36 +247,39 @@ export default function DroneVisualizer({
             );
           })}
 
-          {/* Dynamic Heading Line */}
+          {/* Heading Line */}
           <line
             x1={cx}
             y1={cy}
             x2={cx + 145 * Math.cos(((heading - 90) * Math.PI) / 180)}
             y2={cy + 145 * Math.sin(((heading - 90) * Math.PI) / 180)}
-            stroke="#0ea5e9"
+            stroke="#0EA5E9"
             strokeWidth="1.2"
             strokeDasharray="4 3"
-            opacity="0.65"
+            opacity="0.75"
           />
 
-          {/* Ground Contact Shadow (grows/shrinks with altitude) */}
+          {/* Ambient Cyan Lighting Underneath Drone */}
+          <circle cx={cx} cy={cy} r="65" fill="url(#drone-glow)" />
+
+          {/* Ground Contact Shadow */}
           {isAirborne && (
             <ellipse
               cx={cx}
-              cy={cy + 18}
-              rx={22 + altitude * 0.45}
-              ry={9 + altitude * 0.18}
-              fill="#0ea5e9"
-              opacity="0.08"
+              cy={cy + 16}
+              rx={22 + altitude * 0.4}
+              ry={8 + altitude * 0.16}
+              fill="#94A3B8"
+              opacity="0.18"
             />
           )}
 
-          {/* 3D Quadrotor Airframe Model (Rotates with Heading) */}
+          {/* Professional Vector UAV Airframe (Rotates with Heading) */}
           <g
             transform={`translate(${cx}, ${cy}) rotate(${heading}) scale(${scale})`}
             style={{ transition: 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
           >
-            {/* Quadrotor X-Arm Carbon Booms */}
+            {/* 4 Carbon Arms */}
             {[45, 135, 225, 315].map((angle, idx) => {
               const rad = (angle * Math.PI) / 180;
               const mx = armLen * Math.cos(rad);
@@ -272,14 +289,14 @@ export default function DroneVisualizer({
 
               return (
                 <g key={angle}>
-                  {/* Carbon Boom Arm */}
+                  {/* Structural Boom Arm */}
                   <line
                     x1={0}
                     y1={0}
                     x2={mx}
                     y2={my}
-                    stroke="#1e293b"
-                    strokeWidth="6"
+                    stroke="#1E293B"
+                    strokeWidth="5"
                     strokeLinecap="round"
                   />
                   <line
@@ -287,8 +304,8 @@ export default function DroneVisualizer({
                     y1={0}
                     x2={mx}
                     y2={my}
-                    stroke="#334155"
-                    strokeWidth="2"
+                    stroke="#475569"
+                    strokeWidth="1.5"
                     strokeLinecap="round"
                   />
 
@@ -296,31 +313,32 @@ export default function DroneVisualizer({
                   <circle
                     cx={mx}
                     cy={my}
-                    r="16"
-                    fill="#0f172a"
+                    r="15"
+                    fill="#0F172A"
                     stroke="#334155"
-                    strokeWidth="1.5"
+                    strokeWidth="1.2"
                   />
-
-                  {/* Motor Core */}
                   <circle
                     cx={mx}
                     cy={my}
-                    r="7"
-                    fill={isArmed ? (isFront ? '#38bdf8' : '#64748b') : '#1e293b'}
-                    stroke={isArmed ? '#0284c7' : '#334155'}
-                    strokeWidth="1"
+                    r="6.5"
+                    fill={isArmed ? (isFront ? '#0EA5E9' : '#64748B') : '#1E293B'}
                   />
 
                   {/* Propeller Blade Disc (Animated Rotation when Armed) */}
                   <g transform={`translate(${mx}, ${my})`}>
                     <g className={isCW ? rotorClassCW : rotorClassCCW}>
-                      {/* Propeller Blades */}
                       <path
-                        d="M -22 -2.5 C -12 -5, 12 5, 22 2.5 C 12 5, -12 -5, -22 -2.5 Z"
-                        fill={isArmed ? (isFront ? 'rgba(56, 189, 248, 0.45)' : 'rgba(148, 163, 184, 0.35)') : 'rgba(51, 65, 85, 0.5)'}
+                        d="M -22 -2 C -12 -4, 12 4, 22 2 C 12 4, -12 -4, -22 -2 Z"
+                        fill={
+                          isArmed
+                            ? isFront
+                              ? 'rgba(14, 165, 233, 0.6)'
+                              : 'rgba(71, 85, 105, 0.5)'
+                            : 'rgba(148, 163, 184, 0.4)'
+                        }
                       />
-                      <circle cx="0" cy="0" r="3" fill="#0f172a" />
+                      <circle cx="0" cy="0" r="2.5" fill="#0F172A" />
                     </g>
                     {/* Outer Rotor Safety Ring */}
                     <circle
@@ -328,100 +346,98 @@ export default function DroneVisualizer({
                       cy="0"
                       r="22"
                       fill="none"
-                      stroke={isArmed ? (isFront ? '#38bdf8' : '#64748b') : '#334155'}
+                      stroke={isArmed ? (isFront ? '#0EA5E9' : '#64748B') : '#CBD5E1'}
                       strokeWidth="0.8"
                       strokeDasharray={isArmed ? '4 2' : 'none'}
-                      opacity={isArmed ? 0.7 : 0.3}
+                      opacity={isArmed ? 0.8 : 0.4}
                     />
                   </g>
 
-                  {/* Nav Lights on Motor Stems */}
+                  {/* Nav Lights */}
                   {isArmed && (
                     <circle
-                      cx={mx * 0.85}
-                      cy={my * 0.85}
+                      cx={mx * 0.84}
+                      cy={my * 0.84}
                       r="2.5"
                       fill={
                         angle === 315
-                          ? '#ef4444' // Port Front (Red)
+                          ? '#EF4444' // Port Front (Red)
                           : angle === 45
-                          ? '#22c55e' // Starboard Front (Green)
-                          : '#e2e8f0' // Aft (White)
+                          ? '#16A34A' // Starboard Front (Green)
+                          : '#F8FAFC' // Aft (White)
                       }
-                      filter="url(#glow)"
                     />
                   )}
                 </g>
               );
             })}
 
-            {/* Central Drone Avionics Pod */}
+            {/* Central UAV Fuselage Pod */}
             <rect
-              x="-18"
-              y="-22"
-              width="36"
-              height="44"
+              x="-16"
+              y="-20"
+              width="32"
+              height="40"
               rx="6"
-              fill="#0f172a"
-              stroke="#38bdf8"
-              strokeWidth="1.5"
-            />
-            {/* Battery / Payload Hatch */}
-            <rect
-              x="-12"
-              y="-14"
-              width="24"
-              height="28"
-              rx="3"
-              fill="#1e293b"
+              fill="#0F172A"
               stroke="#334155"
-              strokeWidth="1"
+              strokeWidth="1.2"
+            />
+            {/* Canopy Shell */}
+            <rect
+              x="-11"
+              y="-13"
+              width="22"
+              height="26"
+              rx="3.5"
+              fill="#1E293B"
+              stroke="#0EA5E9"
+              strokeWidth="0.8"
             />
 
-            {/* Central Flight Controller Status LED */}
+            {/* Central Status LED */}
             <circle
               cx="0"
               cy="0"
-              r="4.5"
-              fill={statusColor}
-              filter={isArmed ? 'url(#glow)' : undefined}
+              r="3.5"
+              fill={isArmed ? (isAirborne ? '#0EA5E9' : '#16A34A') : '#64748B'}
             />
 
             {/* Forward Orientation Nose Beacon (Red Arrow) */}
             <polygon
-              points="0,-32 -7,-22 7,-22"
-              fill="#ef4444"
-              stroke="#dc2626"
+              points="0,-28 -6,-20 6,-20"
+              fill="#EF4444"
+              stroke="#DC2626"
               strokeWidth="0.5"
             />
           </g>
         </svg>
 
-        {/* Attitude Angle Indicators (Bottom Left Overlay) */}
-        <div className="absolute bottom-3 left-3 bg-surface-2/80 border border-border-subtle rounded-lg px-3 py-1.5 backdrop-blur-xs font-mono text-2xs z-10 flex items-center gap-3">
+        {/* Pitch & Roll Badge (Bottom Left Floating Card) */}
+        <div className="absolute bottom-4 left-4 bg-white/95 border border-slate-200/90 rounded-xl px-3.5 py-1.5 shadow-subtle font-mono text-[11px] z-10 flex items-center gap-3 backdrop-blur-xs">
           <div>
-            <span className="text-text-muted mr-1.5">PITCH:</span>
-            <span className={`font-semibold ${Math.abs(pitch) > 15 ? 'text-status-amber' : 'text-text-primary'}`}>
+            <span className="text-slate-400 mr-1.5 font-sans">PITCH:</span>
+            <span className={`font-semibold ${Math.abs(pitch) > 15 ? 'text-amber-600' : 'text-slate-800'}`}>
               {pitch > 0 ? `+${pitch.toFixed(1)}` : pitch.toFixed(1)}°
             </span>
           </div>
-          <div className="h-3 w-px bg-border-subtle" />
+          <div className="h-3 w-px bg-slate-200" />
           <div>
-            <span className="text-text-muted mr-1.5">ROLL:</span>
-            <span className={`font-semibold ${Math.abs(roll) > 15 ? 'text-status-amber' : 'text-text-primary'}`}>
+            <span className="text-slate-400 mr-1.5 font-sans">ROLL:</span>
+            <span className={`font-semibold ${Math.abs(roll) > 15 ? 'text-amber-600' : 'text-slate-800'}`}>
               {roll > 0 ? `+${roll.toFixed(1)}` : roll.toFixed(1)}°
             </span>
           </div>
         </div>
 
-        {/* Flight State Indicator (Bottom Right Overlay) */}
-        <div className="absolute bottom-3 right-3 bg-surface-2/80 border border-border-subtle rounded-lg px-3 py-1.5 backdrop-blur-xs font-mono text-2xs z-10 flex items-center gap-2">
-          <span className="text-text-muted">AIRBORNE:</span>
-          <span className={isAirborne ? 'text-status-green font-bold' : 'text-text-muted font-normal'}>
-            {isAirborne ? 'ACTIVE CLIMB' : 'GROUND TAXI'}
+        {/* Flight State & Mission Time (Bottom Right Floating Card) */}
+        <div className="absolute bottom-4 right-4 bg-white/95 border border-slate-200/90 rounded-xl px-3.5 py-1.5 shadow-subtle font-mono text-[11px] z-10 flex items-center gap-2.5 backdrop-blur-xs">
+          <span className="text-slate-400 font-sans">STATE:</span>
+          <span className={isAirborne ? 'text-emerald-600 font-semibold' : 'text-slate-600'}>
+            {isAirborne ? 'AIRBORNE' : 'GROUND'}
           </span>
-          <span className="text-border-subtle">|</span>
-          <span className="text-text-muted">T+ {simTime.toFixed(1)}s</span>
+          <div className="h-3 w-px bg-slate-200" />
+          <span className="text-slate-500">T+ {simTime.toFixed(1)}s</span>
         </div>
       </div>
     </div>
