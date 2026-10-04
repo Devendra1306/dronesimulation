@@ -30,6 +30,8 @@ export const startSimulation = () => api.post('/api/simulation/start');
 export const pauseSimulation = () => api.post('/api/simulation/pause');
 export const resetSimulation = () => api.post('/api/simulation/reset');
 export const processImage = (formData: FormData) => api.post('/api/cv/process', formData);
+export const getVisionPresets = () => api.get<any[]>('/api/cv/presets');
+export const getCameraFrameUrl = () => `${getApiBaseUrl()}/api/cv/camera/frame?t=${Date.now()}`;
 export const analyzeData = (formData: FormData) => api.post('/api/data/analyze', formData);
 export const getEdgeDevices = () => api.get<EdgeDevice[]>('/api/edge/devices');
 export const runEdgeBenchmark = () => api.post('/api/edge/benchmark');

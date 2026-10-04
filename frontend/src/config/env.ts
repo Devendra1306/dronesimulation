@@ -9,7 +9,7 @@ export function getApiBaseUrl(): string {
     return import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '');
   }
   if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
-    return 'https://follow-gathering-annie-requests.trycloudflare.com';
+    return 'https://senate-falls-vocal-bible.trycloudflare.com';
   }
   return 'http://localhost:8000';
 }

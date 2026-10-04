@@ -341,13 +341,36 @@ class GazeboSimulationAdapter(SimulationAdapter):
             pass
 
     def _handle_camera(self, payload: Dict[str, Any]):
-        """Store camera image raw frame."""
+        """Store camera image raw frame as JPEG bytes."""
         try:
             data = payload.get("data")
-            if isinstance(data, (bytes, bytearray)):
-                self._camera_frame = bytes(data)
-        except Exception:
-            pass
+            raw_bytes = None
+            if isinstance(data, str):
+                import base64
+                raw_bytes = base64.b64decode(data)
+            elif isinstance(data, (bytes, bytearray)):
+                raw_bytes = bytes(data)
+            elif isinstance(data, list):
+                raw_bytes = bytes(data)
+
+            if raw_bytes:
+                import cv2
+                import numpy as np
+                h = int(payload.get("height", 480))
+                w = int(payload.get("width", 640))
+                encoding = str(payload.get("encoding", "rgb8")).lower()
+                
+                # If raw rgb8/bgr8 buffer, encode with OpenCV to standard JPEG
+                if len(raw_bytes) == h * w * 3:
+                    arr = np.frombuffer(raw_bytes, dtype=np.uint8).reshape((h, w, 3))
+                    if "rgb" in encoding:
+                        arr = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
+                    _, buf = cv2.imencode('.jpg', arr, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                    self._camera_frame = buf.tobytes()
+                else:
+                    self._camera_frame = raw_bytes
+        except Exception as e:
+            logger.debug(f"Error handling camera frame: {e}")
 
     def _handle_telemetry(self, payload: Any):
         try:
