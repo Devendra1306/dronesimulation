@@ -1,15 +1,22 @@
-// Configuration resolver for local development vs Vercel / Remote Robotics Host
+export const CURRENT_ACTIVE_TUNNEL = 'https://senate-falls-vocal-bible.trycloudflare.com';
 
 export function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('roboedge_api_url');
-    if (saved && saved.trim()) return saved.trim().replace(/\/+$/, '');
+    if (saved && saved.trim()) {
+      // If user has a stale trycloudflare tunnel from an earlier session, auto-upgrade to current active tunnel
+      if (saved.includes('trycloudflare.com') && !saved.includes('senate-falls-vocal-bible')) {
+        localStorage.setItem('roboedge_api_url', CURRENT_ACTIVE_TUNNEL);
+        return CURRENT_ACTIVE_TUNNEL;
+      }
+      return saved.trim().replace(/\/+$/, '');
+    }
   }
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '');
   }
   if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
-    return 'https://senate-falls-vocal-bible.trycloudflare.com';
+    return CURRENT_ACTIVE_TUNNEL;
   }
   return 'http://localhost:8000';
 }

@@ -27,26 +27,36 @@ export default function Header() {
   const [latency, setLatency] = useState<number | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
 
-  useEffect(() => {
-    const fetchStatus = async () => {
-      const start = Date.now();
-      try {
-        const [res, dbRes] = await Promise.all([
-          getSystemStatus(),
-          getDatabaseStatus().catch(() => ({ data: { connected: false, database: '', provider: 'mongodb' } }))
-        ]);
-        setLatency(Date.now() - start);
-        setStatus(res.data);
-        setDbStatus(dbRes.data);
-        setWsConnected(true);
-      } catch {
-        setWsConnected(false);
-        setLatency(null);
-      }
-    };
+  const [isRetrying, setIsRetrying] = useState(false);
 
+  const fetchStatus = async () => {
+    const start = Date.now();
+    try {
+      const [res, dbRes] = await Promise.all([
+        getSystemStatus(),
+        getDatabaseStatus().catch(() => ({ data: { connected: false, database: '', provider: 'mongodb' } }))
+      ]);
+      setLatency(Date.now() - start);
+      setStatus(res.data);
+      setDbStatus(dbRes.data);
+      setWsConnected(true);
+    } catch {
+      setWsConnected(false);
+      setLatency(null);
+      if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+        const saved = localStorage.getItem('roboedge_api_url');
+        if (saved !== 'https://senate-falls-vocal-bible.trycloudflare.com') {
+          localStorage.setItem('roboedge_api_url', 'https://senate-falls-vocal-bible.trycloudflare.com');
+        }
+      }
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 4000);
+    const interval = setInterval(fetchStatus, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -117,16 +127,23 @@ export default function Header() {
         </div>
 
         {/* Latency / Ping indicator */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800/40 border border-slate-700/40 text-xs">
+        <button
+          onClick={() => {
+            setIsRetrying(true);
+            fetchStatus();
+          }}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800/40 hover:bg-slate-800 border border-slate-700/40 text-xs transition-colors cursor-pointer"
+          title="Click to re-check connection"
+        >
           {wsConnected ? (
             <Wifi className="w-3.5 h-3.5 text-emerald-400" />
           ) : (
-            <WifiOff className="w-3.5 h-3.5 text-rose-400" />
+            <WifiOff className={`w-3.5 h-3.5 text-rose-400 ${isRetrying ? 'animate-spin' : ''}`} />
           )}
           <span className="font-mono text-slate-300 text-[11px]">
-            {latency !== null ? `${latency}ms` : 'OFFLINE'}
+            {latency !== null ? `${latency}ms` : 'RECONNECT'}
           </span>
-        </div>
+        </button>
 
         <div className="h-4 w-px bg-slate-700/60" />
 

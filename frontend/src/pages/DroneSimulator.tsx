@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DroneControls from '../components/drone/DroneControls';
 import DroneVisualizer from '../components/drone/DroneVisualizer';
 import PrimaryFlightDisplay from '../components/drone/PrimaryFlightDisplay';
@@ -8,14 +8,17 @@ import {
   startSimulation, 
   pauseSimulation, 
   resetSimulation,
-  getSystemStatus
+  getSystemStatus,
+  getTelemetry
 } from '../services/api';
+import { useWebSocket } from '../hooks/useWebSocket';
+import { WS_TELEMETRY_URL } from '../config/env';
 import { 
   Play, Pause, RotateCcw, Box, Compass, 
   Layers, Gauge, Activity, ShieldCheck, 
   Terminal, Zap, Radio
 } from 'lucide-react';
-import type { SystemStatus } from '../types';
+import type { SystemStatus, TelemetryData } from '../types';
 
 interface EventLog {
   time: string;
@@ -24,7 +27,7 @@ interface EventLog {
 }
 
 export default function DroneSimulator() {
-  const { state } = useAppStore();
+  const { state, dispatch } = useAppStore();
   const [viewMode, setViewMode] = useState<'3d_drone' | 'cockpit_hud' | 'split'>('3d_drone');
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [simRunning, setSimRunning] = useState(true);
@@ -35,6 +38,34 @@ export default function DroneSimulator() {
     { time: '00:00:03', type: 'INFO', message: 'Bound ROS2 Controller: /cmd_vel (Twist) -> libgazebo_ros_quadrotor_controller.so' },
     { time: '00:00:04', type: 'TELEMETRY', message: 'High-frequency Odometry Stream active (/odom @ 900+ Hz)' },
   ]);
+
+  // Telemetry stream via WebSocket
+  const onTelemMessage = useCallback(
+    (data: TelemetryData) => {
+      dispatch({ type: 'SET_TELEMETRY', payload: data });
+    },
+    [dispatch]
+  );
+
+  useWebSocket({
+    url: WS_TELEMETRY_URL,
+    onMessage: onTelemMessage,
+  });
+
+  // Telemetry polling fallback
+  useEffect(() => {
+    const fetchTelem = async () => {
+      try {
+        const res = await getTelemetry();
+        if (res.data) {
+          dispatch({ type: 'SET_TELEMETRY', payload: res.data });
+        }
+      } catch {}
+    };
+    fetchTelem();
+    const interval = setInterval(fetchTelem, 1500);
+    return () => clearInterval(interval);
+  }, [dispatch]);
 
   const telemetry = state.telemetry;
 
