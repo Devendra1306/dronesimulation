@@ -13,6 +13,9 @@ def generate_launch_description():
     env = dict(os.environ)
     curr_plugin_path = env.get('GAZEBO_PLUGIN_PATH', '')
     env['GAZEBO_PLUGIN_PATH'] = f"{plugin_dir}:{curr_plugin_path}"
+    env['GAZEBO_MODEL_DATABASE_URI'] = ''
+    if 'DISPLAY' not in env or not env['DISPLAY']:
+        env['DISPLAY'] = ':0'
 
     # 1. Start Gazebo with the 3D Quadrotor World & ROS 2 plugins
     gazebo_cmd = ExecuteProcess(

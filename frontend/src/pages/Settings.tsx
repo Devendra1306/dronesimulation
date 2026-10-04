@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Panel from '../components/common/Panel';
 import { Sliders, Cpu, Network, Database, Shield, Save, Check } from 'lucide-react';
-import { API_BASE_URL, WS_BASE_URL } from '../config/env';
+import { API_BASE_URL, WS_BASE_URL, setApiBaseUrl } from '../config/env';
 
 export default function Settings() {
   const [savedNotice, setSavedNotice] = useState(false);
@@ -17,6 +17,10 @@ export default function Settings() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    setApiBaseUrl(config.apiUrl);
+    if (config.wsUrl) {
+      localStorage.setItem('roboedge_ws_url', config.wsUrl);
+    }
     setSavedNotice(true);
     setTimeout(() => setSavedNotice(false), 2500);
   };

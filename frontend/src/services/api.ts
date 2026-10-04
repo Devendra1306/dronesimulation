@@ -5,9 +5,14 @@ import {
   SimulationRun, HistoricalTelemetry 
 } from '../types';
 
-import { API_BASE_URL } from '../config/env';
+import { API_BASE_URL, getApiBaseUrl } from '../config/env';
 
 const api = axios.create({ baseURL: API_BASE_URL, timeout: 10000 });
+
+api.interceptors.request.use((config) => {
+  config.baseURL = getApiBaseUrl();
+  return config;
+});
 
 export const getSystemStatus = () => api.get<SystemStatus>('/api/system/status');
 export const getTelemetry = () => api.get<TelemetryData>('/api/drone/telemetry');
